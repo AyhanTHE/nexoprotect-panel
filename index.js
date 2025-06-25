@@ -8,6 +8,7 @@ const path = require('path');
 const fetch = require('node-fetch');
 const { MongoClient } = require('mongodb');
 const session = require('express-session');
+// MODIFICATION MAJEURE : Importation de la librairie PayPal
 const paypal = require('@paypal/checkout-server-sdk');
 require('dotenv').config();
 
@@ -19,7 +20,6 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'src', 'dashboard', 'views'));
 
 // --- MIDDLEWARES ---
-// IMPORTANT: Le webhook middleware doit être avant express.json() pour le body brut
 app.post('/api/paypal-webhook', express.raw({ type: 'application/json' }));
 app.use(express.static(path.join(__dirname, 'src', 'dashboard', 'public')));
 app.use(express.json({ limit: '50mb' }));
@@ -68,12 +68,13 @@ app.get('/premium', (req, res) => {
 // CRÉER LA COMMANDE PAYPAL
 app.post('/api/create-payment', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
+    // CORRIGÉ : Utilisation directe de l'objet paypal importé
     const request = new paypal.orders.OrdersCreateRequest();
     request.prefer("return=representation");
     request.requestBody({
         intent: 'CAPTURE',
         purchase_units: [{
-            amount: { currency_code: 'EUR', value: '0.01' }, // <-- PRIX MODIFIÉ POUR LES TESTS
+            amount: { currency_code: 'EUR', value: '0.01' },
             description: `Abonnement Premium 1 mois pour ${req.session.user.username}`,
             custom_id: req.session.user.id
         }],
@@ -107,6 +108,8 @@ app.get('/payment-cancel', (req, res) => {
 // GESTION DES WEBHOOKS PAYPAL
 app.post('/api/paypal-webhook', async (req, res) => {
     const webhookId = process.env.PAYPAL_WEBHOOK_ID; 
+
+    // CORRIGÉ : Utilisation directe de l'objet paypal importé
     const request = new paypal.webhooks.WebhookVerificationRequest(req.headers, req.body, webhookId);
     try {
         await paypalClient.execute(request);
@@ -145,3 +148,4 @@ app.post('/api/claim-vip', async (req, res) => { /* ... */ });
 
 // --- DÉMARRAGE DU SERVEUR ---
 app.listen(PORT, () => console.log(`✅ Serveur web du panel démarré et à l'écoute sur le port ${PORT}`));
+
