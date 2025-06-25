@@ -1,0 +1,473 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* ========== VARIABLES & GENERAL ========== */
+:root {
+    --bg-dark: #0d1117;
+    --bg-light: #161b22;
+    --border-color: #30363d;
+    --text-primary: #c9d1d9;
+    --text-secondary: #8b949e;
+    --text-white: #ffffff;
+    --accent-blue: #1f6feb;
+    --accent-blue-hover: #388bfd;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+section {
+    padding: 100px 0;
+}
+
+/* --- Barre de Navigation --- */
+.navbar {
+    background-color: var(--bg-light);
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-white);
+    font-weight: 700;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.logo-text {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    transition: text-shadow 0.3s ease; /* NOUVEAU */
+}
+
+.logo img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    transition: filter 0.3s ease; /* NOUVEAU */
+}
+
+/* NOUVEAU : Effet de lueur sur le logo au survol */
+.logo:hover .logo-text {
+    text-shadow: 0 0 8px var(--accent-blue-hover);
+}
+
+.logo:hover img {
+    filter: drop-shadow(0 0 8px var(--accent-blue));
+}
+
+
+.navbar nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    position: relative;
+    padding-bottom: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    background-color: var(--accent-blue-hover);
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: width 0.3s ease-in-out;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--text-white);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+    width: 80%;
+}
+
+/* --- Boutons --- */
+.btn {
+    padding: 8px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: var(--accent-blue);
+    color: var(--text-white);
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-blue-hover);
+    box-shadow: 0 0 15px var(--accent-blue), 0 0 25px rgba(31, 111, 235, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background-color: var(--bg-light);
+    border-color: var(--accent-blue-hover);
+    color: var(--text-white);
+    box-shadow: 0 0 15px rgba(56, 139, 253, 0.4);
+}
+
+
+/* --- Section Héros --- */
+.hero {
+    padding: 6rem 0;
+    text-align: left;
+}
+
+.hero-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.hero-text h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    color: var(--text-white);
+}
+
+.hero-text p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 600px;
+}
+
+.hero-logo-main {
+    width: 250px;
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+/* --- Section Fonctionnalités & Cartes --- */
+.features, .team, .blacklist {
+    padding: 6rem 0;
+    background-color: var(--bg-light);
+    border-top: 1px solid var(--border-color);
+}
+
+.team {
+    background-color: var(--bg-dark);
+}
+
+.blacklist {
+    background-color: var(--bg-dark);
+}
+
+.section-title, .features h2, .team h2, .blacklist h2, .cta h2, .stats h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-white);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.section-subtitle, .team-subtitle, .blacklist-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    margin: 0 auto 4rem;
+    max-width: 600px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.feature-card {
+    background-color: var(--bg-dark);
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    color: var(--accent-blue);
+    background-color: rgba(31, 111, 235, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+.feature-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-white);
+}
+
+.feature-card p {
+    color: var(--text-secondary);
+}
+
+/* --- Section Équipe --- */
+.team-grid {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.team-member-card {
+    background-color: var(--bg-light);
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    width: 280px;
+}
+
+.team-pfp {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--accent-blue);
+    object-fit: cover;
+    margin-bottom: 1rem;
+}
+
+.team-member-card h3 {
+    margin: 0.5rem 0;
+    font-size: 1.5rem;
+    color: var(--text-white);
+}
+
+.team-role {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.team-status {
+    background-color: #238636;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* --- Section Blacklist --- */
+.blacklist h2::after {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 3px;
+    background-color: var(--accent-blue);
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+.blacklist h2 {
+     position: relative;
+    display: inline-block;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.blacklist-content {
+    display: flex;
+    align-items: center;
+    gap: 4rem;
+}
+
+.blacklist-icon-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.blacklist-icon-main {
+    font-size: 12rem;
+    color: var(--bg-light);
+}
+
+.blacklist-icon-secondary {
+    position: absolute;
+    bottom: -10px;
+    right: -20px;
+    font-size: 5rem;
+    color: #c93c3c;
+    background-color: var(--bg-dark);
+    padding: 10px;
+    border-radius: 50%;
+}
+
+.blacklist-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+/* --- Section Appel à l'Action (CTA) --- */
+.cta {
+    padding: 5rem 0;
+    text-align: center;
+    background-color: var(--bg-light);
+}
+
+/* --- Section Statistiques --- */
+.stats {
+    position: relative;
+    padding: 5rem 0;
+    text-align: center;
+    color: white;
+}
+
+.stats-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(rgba(31, 111, 235, 0.8), rgba(31, 111, 235, 0.8)), url('https://images.unsplash.com/photo-1519681393784-d120267933ba');
+    background-size: cover;
+    background-position: center;
+    z-index: 1;
+}
+
+.stats-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.stat-label {
+    font-size: 1rem;
+    font-weight: 400;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* --- Pied de Page --- */
+.footer {
+    background-color: var(--bg-light);
+    text-align: center;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 1024px) {
+    .navbar nav {
+        display: none;
+    }
+    .navbar .container {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-content, .blacklist-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    .hero-text, .blacklist-text {
+        order: 2;
+    }
+    .hero-image, .blacklist-icon-container {
+        order: 1;
+        margin-bottom: 2rem;
+    }
+    .hero-logo-main {
+        width: 180px;
+    }
+    .hero-text h1 { font-size: 2.2rem; }
+    .hero-text, .blacklist-text {
+        text-align: center;
+    }
+}
