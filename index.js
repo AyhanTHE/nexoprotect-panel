@@ -1,8 +1,8 @@
 // =================================================================
 //        INDEX.JS COMPLET POUR LE PANEL WEB (AVEC EJS)
 // =================================================================
-// Version finale incluant la route pour la page de gestion
-// de serveur.
+// Version mise à jour pour augmenter la limite de taille des
+// requêtes, corrigeant l'erreur 413 "Payload Too Large".
 // =================================================================
 
 // --- IMPORTS ---
@@ -23,8 +23,12 @@ app.set('views', path.join(__dirname, 'src', 'dashboard', 'views'));
 
 // --- MIDDLEWARES ---
 app.use(express.static(path.join(__dirname, 'src', 'dashboard', 'public')));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// *** CORRECTION IMPORTANTE ***
+// On augmente la limite de taille pour accepter les images en Base64.
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'une-super-phrase-secrete-pour-nexoprotect',
     resave: false,
@@ -41,7 +45,7 @@ mongoClient.connect().then(() => {
 }).catch(err => console.error("❌ Erreur de connexion à MongoDB:", err));
 
 
-// --- ROUTES DE L'APPLICATION ---
+// --- ROUTES DE L'APPLICATION (Le reste du code est inchangé) ---
 
 // Page d'accueil
 app.get('/', (req, res) => {
@@ -125,32 +129,27 @@ app.get('/manage/:guildId', async (req, res) => {
         const discordApi = 'https://discord.com/api/v10';
         const botAuthHeader = { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` };
 
-        // 1. Récupérer les infos du serveur
         const guildResponse = await fetch(`${discordApi}/guilds/${req.params.guildId}`, { headers: botAuthHeader });
         if (!guildResponse.ok) throw new Error('Impossible de récupérer les informations du serveur.');
         const guildData = await guildResponse.json();
         
-        // 2. Récupérer les salons textuels
         const channelsResponse = await fetch(`${discordApi}/guilds/${req.params.guildId}/channels`, { headers: botAuthHeader });
         const channelsData = await channelsResponse.json();
         const textChannels = channelsData.filter(c => c.type === 0);
 
-        // 3. Récupérer les infos de l'utilisateur (VIP, etc.)
         const usersCollection = db.collection('users');
         const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
         let grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
         const user = { ...req.session.user, grade };
 
-        // 4. Récupérer les paramètres actuels du serveur depuis notre DB
         const settingsCollection = db.collection('settings');
         const guildSettings = await settingsCollection.findOne({ guildId: req.params.guildId });
         
-        // 5. On rend la nouvelle page 'manage-server.ejs' avec les données
         res.render('manage-server', {
             user: user,
             guild: guildData,
             channels: textChannels,
-            settings: guildSettings || {} // On envoie un objet vide si pas de settings
+            settings: guildSettings || {}
         });
 
     } catch (error) {
@@ -159,10 +158,8 @@ app.get('/manage/:guildId', async (req, res) => {
     }
 });
 
-
 // --- ROUTES API ---
 
-// API pour SAUVEGARDER les paramètres de bienvenue
 app.post('/api/settings/:guildId/welcome', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
     
@@ -179,7 +176,6 @@ app.post('/api/settings/:guildId/welcome', async (req, res) => {
             'welcome.channelId': channelId,
             'welcome.message': message,
         };
-        // Seuls les VIP peuvent sauvegarder une bannière
         if (isVip) {
             updateData['welcome.bannerUrl'] = bannerUrl;
         }
@@ -197,7 +193,6 @@ app.post('/api/settings/:guildId/welcome', async (req, res) => {
     }
 });
 
-// API pour SAUVEGARDER les paramètres d'au revoir
 app.post('/api/settings/:guildId/goodbye', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
     
@@ -224,8 +219,6 @@ app.post('/api/settings/:guildId/goodbye', async (req, res) => {
     }
 });
 
-
-// API pour réclamer le statut VIP
 app.post('/api/claim-vip', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
     try {
