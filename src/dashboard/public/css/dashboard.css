@@ -301,6 +301,89 @@ body {
     text-shadow: 0 0 2px rgba(0,0,0,0.2);
 }
 
+/* ================================== */
+/* STYLE POUR LA PAGE PREMIUM         */
+/* ================================== */
+
+.premium-content {
+    margin-top: 2rem;
+}
+
+.premium-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.premium-card h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.premium-card p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.price-tag {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--vip-gold);
+    margin: 2rem 0;
+    text-shadow: 0 0 15px var(--vip-glow);
+}
+
+.price-tag .per-month {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    text-shadow: none;
+}
+
+.warning-box {
+    background-color: rgba(255, 215, 0, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-left: 4px solid var(--vip-gold);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin: 2.5rem 0;
+    text-align: left;
+}
+
+.warning-box h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.warning-box p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.btn-payment {
+    display: inline-block;
+    background-color: #0070BA; /* Bleu officiel de PayPal */
+    color: #fff;
+    padding: 1rem 2.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.2rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-payment:hover {
+    background-color: #005ea6;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(0, 112, 186, 0.5);
+}
+
 .btn-premium:hover {
     transform: scale(1.05);
     box-shadow: 0 0 25px var(--vip-glow); /* Effet néon au survol */

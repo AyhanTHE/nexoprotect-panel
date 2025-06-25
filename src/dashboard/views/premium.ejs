@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoProtect - Devenir Premium</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        /* Styles pour les messages de statut */
+        .status-message {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            font-weight: 500;
+            display: none; /* Caché par défaut */
+        }
+        .status-message.success {
+            background-color: rgba(46, 204, 113, 0.1);
+            border: 1px solid #2ecc71;
+            color: #2ecc71;
+            display: block;
+        }
+        .status-message.error {
+            background-color: rgba(231, 76, 60, 0.1);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            display: block;
+        }
+        .status-message.cancelled {
+            background-color: rgba(243, 156, 18, 0.1);
+            border: 1px solid #f39c12;
+            color: #f39c12;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-layout">
+        <!-- Menu latéral (identique au dashboard) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/" class="logo">
+                    <img src="/images/NexoProtect-removebg-preview.png" alt="Logo NexoProtect">
+                    <span>NexoProtect</span>
+                </a>
+            </div>
+
+            <% if (user) { %>
+            <div class="profile-card">
+                <div class="profile-banner"></div>
+                <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png?size=128" alt="Avatar" class="profile-avatar">
+                <h2 class="profile-name"><%= user.username %></h2>
+                <div class="profile-grade <%= user.grade === 'VIP' ? 'vip' : '' %>">
+                    <i class="fas <%= user.grade === 'VIP' ? 'fa-crown' : 'fa-user' %>"></i>
+                    <span><%= user.grade %></span>
+                </div>
+            </div>
+            <% } %>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="nav-item"><i class="fas fa-server"></i> Serveurs</a>
+                <a href="#" class="nav-item"><i class="fas fa-cog"></i> Paramètres</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <% if (user) { %>
+                    <button id="claim-vip-btn" class="btn-vip" <%= user.grade === 'VIP' ? 'disabled' : '' %>>
+                        <i class="fas fa-star"></i> 
+                        <span><%= user.grade === 'VIP' ? 'VIP Actif' : 'Réclamer VIP' %></span>
+                    </button>
+                    <a href="/premium" class="btn-premium">
+                        <i class="fas fa-gem"></i>
+                        <span>Devenir Premium</span>
+                    </a>
+                <% } %>
+                <a href="/logout" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Déconnexion</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Contenu principal pour la page Premium -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1><i class="fas fa-gem" style="color: var(--vip-gold);"></i> Devenez Premium</h1>
+                <p>Passez au niveau supérieur et soutenez le projet.</p>
+            </header>
+            
+            <div class="premium-content">
+                <div class="premium-card">
+                    
+                    <!-- Zone pour afficher les messages de succès ou d'erreur -->
+                    <% if (message === 'success') { %>
+                        <div class="status-message success">
+                            <i class="fas fa-check-circle"></i> Merci pour votre soutien ! Votre abonnement Premium est maintenant actif.
+                        </div>
+                    <% } else if (message === 'error') { %>
+                        <div class="status-message error">
+                            <i class="fas fa-times-circle"></i> Une erreur est survenue lors du paiement. Veuillez réessayer ou contacter le support.
+                        </div>
+                    <% } else if (message === 'cancelled') { %>
+                         <div class="status-message cancelled">
+                            <i class="fas fa-info-circle"></i> Vous avez annulé le processus de paiement.
+                        </div>
+                    <% } %>
+
+                    <h2>Un accès exclusif à des fonctionnalités uniques</h2>
+                    <p>
+                        Le grade Premium vous donne accès à une multitude de nouvelles fonctionnalités pour gérer vos serveurs Discord comme jamais auparavant. En plus des avantages sur le tableau de bord, vous obtiendrez un rôle et un grade exclusifs sur notre serveur Discord pour montrer votre soutien.
+                    </p>
+
+                    <div class="price-tag">
+                        Seulement 5€ <span class="per-month">/ mois</span>
+                    </div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Information importante</h4>
+                        <p>Les paiements sont gérés via PayPal. Toute ouverture de litige sur PayPal dans le but d'obtenir un remboursement frauduleux entraînera une révocation immédiate de vos avantages et une exclusion permanente (blacklist) de tous nos services.</p>
+                    </div>
+
+                    <button id="payment-btn" class="btn-payment">
+                        <i class="fab fa-paypal"></i> Procéder au paiement
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        const paymentBtn = document.getElementById('payment-btn');
+        paymentBtn.addEventListener('click', () => {
+            // Afficher un état de chargement
+            paymentBtn.disabled = true;
+            paymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirection vers PayPal...';
+
+            // Appeler notre API pour créer la commande
+            fetch('/api/create-payment', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.approveUrl) {
+                        // Rediriger l'utilisateur vers PayPal
+                        window.location.href = data.approveUrl;
+                    } else {
+                        throw new Error(data.error || 'URL de paiement non reçue.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Erreur du script de paiement:', err);
+                    paymentBtn.disabled = false;
+                    paymentBtn.innerHTML = '<i class="fab fa-paypal"></i> Erreur, réessayez';
+                });
+        });
+    </script>
+</body>
+</html>

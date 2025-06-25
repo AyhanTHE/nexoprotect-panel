@@ -1,8 +1,5 @@
 // =================================================================
-//        INDEX.JS COMPLET POUR LE PANEL WEB (AVEC EJS)
-// =================================================================
-// Version fiabilisée pour garantir la récupération des rôles
-// et le bon fonctionnement de la page de gestion.
+//      INDEX.JS COMPLET AVEC INTÉGRATION PAYPAL (SANS WEBHOOKS)
 // =================================================================
 
 // --- IMPORTS ---
@@ -11,6 +8,7 @@ const path = require('path');
 const fetch = require('node-fetch');
 const { MongoClient } = require('mongodb');
 const session = require('express-session');
+const paypal = require('@paypal/checkout-server-sdk');
 require('dotenv').config();
 
 // --- INITIALISATION & CONFIGURATION ---
@@ -28,7 +26,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'une-super-phrase-secrete-pour-nexoprotect',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: true, httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }
+    cookie: { secure: process.env.NODE_ENV === 'production', httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }
 }));
 
 // --- CONNEXION À LA BASE DE DONNÉES ---
@@ -39,8 +37,15 @@ mongoClient.connect().then(() => {
     db = mongoClient.db('nexoprotect_db');
 }).catch(err => console.error("❌ Erreur de connexion à MongoDB:", err));
 
+// --- CONFIGURATION DU CLIENT PAYPAL ---
+const Environment = process.env.NODE_ENV === 'production'
+  ? paypal.core.LiveEnvironment
+  : paypal.core.SandboxEnvironment;
+const paypalClient = new paypal.core.PayPalHttpClient(
+    new Environment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
+);
 
-// --- ROUTES DE L'APPLICATION ---
+// --- ROUTES DE L'APPLICATION (Authentification et Dashboard) ---
 
 app.get('/', (req, res) => {
     if (req.session.user) return res.redirect('/dashboard');
@@ -97,59 +102,41 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-// ROUTE /manage/:guildId CORRIGÉE ET FIABILISÉE
 app.get('/manage/:guildId', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
-    
     try {
         const discordApi = 'https://discord.com/api/v10';
         const botAuthHeader = { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` };
-
-        // 1. Récupérer toutes les données de l'API Discord en parallèle
         const [guildResponse, channelsResponse, rolesResponse, botMemberResponse] = await Promise.all([
             fetch(`${discordApi}/guilds/${req.params.guildId}`, { headers: botAuthHeader }),
             fetch(`${discordApi}/guilds/${req.params.guildId}/channels`, { headers: botAuthHeader }),
             fetch(`${discordApi}/guilds/${req.params.guildId}/roles`, { headers: botAuthHeader }),
             fetch(`${discordApi}/guilds/${req.params.guildId}/members/${process.env.CLIENT_ID}`, { headers: botAuthHeader })
         ]);
-
         if (!guildResponse.ok) throw new Error('Impossible de récupérer les infos du serveur.');
-
-        // 2. Traiter les réponses JSON
         const [guildData, channelsData, rolesData] = await Promise.all([
             guildResponse.json(), channelsResponse.json(), rolesResponse.json()
         ]);
-        
         const botMember = botMemberResponse.ok ? await botMemberResponse.json() : null;
-        
-        // 3. Récupérer les données de notre base de données
         const [userDbInfo, guildSettings] = await Promise.all([
             db.collection('users').findOne({ userId: req.session.user.id }),
             db.collection('settings').findOne({ guildId: req.params.guildId })
         ]);
-        
-        // 4. Préparer les données pour la page EJS
         const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
         const user = { ...req.session.user, grade };
         const textChannels = Array.isArray(channelsData) ? channelsData.filter(c => c.type === 0) : [];
-        
         const botHighestRolePosition = (botMember && Array.isArray(botMember.roles)) ? botMember.roles.reduce((maxPos, roleId) => {
             const role = rolesData.find(r => r.id === roleId);
             return role && role.position > maxPos ? role.position : maxPos;
         }, 0) : 0;
-        
         const roles = Array.isArray(rolesData) ? rolesData
             .filter(role => role.name !== '@everyone' && !role.managed)
             .map(role => ({ ...role, canManage: role.position < botHighestRolePosition }))
             : [];
-        
-        // 5. Rendre la page avec toutes les données
         res.render('manage-server', {
             user, guild: guildData, channels: textChannels,
-            roles, // LA VARIABLE EST MAINTENANT TOUJOURS PRÉSENTE
-            settings: guildSettings || {}
+            roles, settings: guildSettings || {}
         });
-
     } catch (error) {
         console.error("Erreur de chargement de la page de gestion:", error);
         res.status(500).send("Erreur lors du chargement de la page de gestion.");
@@ -157,7 +144,91 @@ app.get('/manage/:guildId', async (req, res) => {
 });
 
 
-// --- ROUTES API (Logique de sauvegarde) ---
+// ===============================================
+// --- ROUTES POUR LE PREMIUM ET PAYPAL ---
+// ===============================================
+
+// 1. AFFICHER LA PAGE PREMIUM
+app.get('/premium', (req, res) => {
+    if (!req.session.user) return res.redirect('/');
+    res.render('premium', { user: req.session.user, message: req.query.message || null });
+});
+
+// 2. CRÉER LA COMMANDE PAYPAL (API)
+app.post('/api/create-payment', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
+    
+    const request = new paypal.orders.OrdersCreateRequest();
+    request.prefer("return=representation");
+    request.requestBody({
+        intent: 'CAPTURE',
+        purchase_units: [{
+            amount: { currency_code: 'EUR', value: '5.00' },
+            description: `Abonnement Premium 1 mois pour ${req.session.user.username}`,
+            custom_id: req.session.user.id // On stocke l'ID Discord pour le retrouver plus tard
+        }],
+        application_context: {
+            brand_name: 'NexoProtect',
+            return_url: `${process.env.REDIRECT_URI.replace('/callback', '')}/payment-success`,
+            cancel_url: `${process.env.REDIRECT_URI.replace('/callback', '')}/payment-cancel`,
+            user_action: 'PAY_NOW',
+        },
+    });
+
+    try {
+        const order = await paypalClient.execute(request);
+        const approveUrl = order.result.links.find(link => link.rel === 'approve').href;
+        res.json({ approveUrl });
+    } catch (err) {
+        console.error("Erreur de création de commande PayPal:", err.message);
+        res.status(500).json({ error: "Erreur lors de la communication avec PayPal." });
+    }
+});
+
+// 3. PAIEMENT RÉUSSI
+app.get('/payment-success', async (req, res) => {
+    if (!req.query.token) return res.redirect('/premium?message=error');
+
+    const request = new paypal.orders.OrdersCaptureRequest(req.query.token);
+    request.requestBody({});
+
+    try {
+        const capture = await paypalClient.execute(request);
+        const purchaseUnit = capture.result.purchase_units[0];
+        const userId = purchaseUnit.payments.captures[0].custom_id;
+
+        if (userId) {
+            const usersCollection = db.collection('users');
+            const userDb = await usersCollection.findOne({ userId });
+            
+            const newExpiryDate = (userDb && userDb.vipExpires && new Date(userDb.vipExpires) > new Date())
+                ? new Date(new Date(userDb.vipExpires).getTime() + 30 * 24 * 60 * 60 * 1000) // Ajoute 30 jours à la date existante
+                : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // Ajoute 30 jours à maintenant
+
+            await usersCollection.updateOne(
+                { userId: userId },
+                { $set: { vipExpires: newExpiryDate }, $setOnInsert: { userId: userId } },
+                { upsert: true }
+            );
+            
+            console.log(`✅ VIP activé/prolongé pour l'utilisateur ${userId} jusqu'au ${newExpiryDate.toISOString()}`);
+            res.redirect('/premium?message=success');
+        } else {
+            throw new Error("ID utilisateur non trouvé dans la transaction PayPal.");
+        }
+    } catch (err) {
+        console.error("Erreur lors de la capture du paiement:", err.message);
+        res.redirect('/premium?message=error');
+    }
+});
+
+// 4. PAIEMENT ANNULÉ
+app.get('/payment-cancel', (req, res) => {
+    res.redirect('/premium?message=cancelled');
+});
+
+
+// --- ROUTES API (Logique de sauvegarde existante) ---
 app.post('/api/settings/:guildId/welcome', async (req, res) => { /* ... */ });
 app.post('/api/settings/:guildId/autorole', async (req, res) => { /* ... */ });
 app.post('/api/claim-vip', async (req, res) => { /* ... */ });

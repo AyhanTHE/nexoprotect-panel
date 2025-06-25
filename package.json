@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@paypal/checkout-server-sdk": "^1.0.3",
     "discord.js": "^14.20.0",
     "dotenv": "^16.5.0",
     "ejs": "^3.1.10",
