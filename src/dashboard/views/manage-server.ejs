@@ -5,105 +5,138 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion de <%= guild.name %></title>
     <link rel="stylesheet" href="/css/manage.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 </head>
 <body>
     <div class="manage-layout">
         <aside class="manage-sidebar">
-            <div class="sidebar-header">
-                <img src="<%= guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : '/images/default-icon.png' %>" alt="Icône du serveur" class="server-icon-large">
-                <h2 class="server-name-large"><%= guild.name %></h2>
-            </div>
-            
-            <nav class="manage-nav">
-                <a href="#" class="nav-category active"><i class="fas fa-tachometer-alt"></i><span>Tableau de bord</span></a>
-                <div class="nav-divider"></div>
-                <h3 class="nav-title">Modules</h3>
-                <a href="#" class="nav-category"><i class="fas fa-shield-alt"></i><span>Modération</span></a>
-                <a href="#" class="nav-category"><i class="fas fa-bullhorn"></i><span>Annonces</span></a>
-                <a href="#" class="nav-category"><i class="fas fa-users"></i><span>Accueil</span></a>
-                <a href="#" class="nav-category"><i class="fas fa-gamepad"></i><span>Niveaux</span></a>
-            </nav>
-
-            <div class="user-profile-section">
-                <% if (user) { %>
-                    <div class="profile-info">
-                        <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png?size=64" alt="Avatar" class="profile-avatar-small">
-                        <div class="profile-text">
-                            <span class="profile-name"><%= user.username %></span>
-                            <span class="profile-grade <%= user.grade === 'VIP' ? 'vip' : '' %>">
-                                <i class="fas <%= user.grade === 'VIP' ? 'fa-crown' : 'fa-user' %>"></i> <%= user.grade %>
-                            </span>
-                        </div>
-                    </div>
-                <% } %>
-                <a href="/dashboard" class="btn-back"><i class="fas fa-arrow-left"></i><span>Retour aux serveurs</span></a>
-            </div>
+            <div class="sidebar-header">...</div>
+            <nav class="manage-nav">...</nav>
+            <div class="user-profile-section">...</div>
         </aside>
 
         <main class="manage-main-content">
             <header class="manage-header">
-                <h1>Tableau de bord de <%= guild.name %></h1>
-                <p>Bienvenue sur le panel de configuration de votre serveur.</p>
+                <h1>Messages d'arrivées et départs</h1>
+                <p>Configurez ici les messages de bienvenue et d'au revoir pour votre serveur.</p>
             </header>
+            
+            <form id="settings-form">
+                <details class="module-accordion" open>
+                    <summary class="module-summary">
+                        <div class="summary-title">
+                            <i class="fas fa-hand-sparkles"></i>
+                            <h3>Messages de Bienvenue</h3>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="welcomeEnabled" <%= settings.welcome && settings.welcome.enabled ? 'checked' : '' %>>
+                            <span class="slider round"></span>
+                        </label>
+                    </summary>
+                    <div class="module-content">
+                        <div class="settings-grid">
+                            <div class="settings-column">
+                                <label for="welcome-channel">Salon des messages de bienvenue</label>
+                                <select id="welcome-channel" name="welcomeChannelId" class="select-box">
+                                    <option value="">Sélectionnez un salon</option>
+                                    <% channels.forEach(channel => { %>
+                                        <option value="<%= channel.id %>" <%= settings.welcome && settings.welcome.channelId === channel.id ? 'selected' : '' %>>
+                                            #<%= channel.name %>
+                                        </option>
+                                    <% }); %>
+                                </select>
 
-            <section class="module-section">
-                <h2>Activer / Désactiver les modules</h2>
-                <div class="modules-grid">
-                    <!-- Module Modération -->
-                    <div class="module-card">
-                        <div class="module-icon mod"><i class="fas fa-shield-alt"></i></div>
-                        <div class="module-info">
-                            <h3>Modération</h3>
-                            <p>Protégez votre serveur contre le spam et les raids.</p>
+                                <label for="welcome-message">Message personnalisé</label>
+                                <textarea id="welcome-message" name="welcomeMessage" class="textarea-box" placeholder="Ex: Bienvenue {user.username} !"><%= settings.welcome ? settings.welcome.message : '' %></textarea>
+                                <p class="variable-info">Variables: {user.username}, {user.mention}, {server.name}</p>
+
+                                <label>Bannière de bienvenue</label>
+                                <% if (user.grade === 'VIP') { %>
+                                    <div class="setting-vip">
+                                        <i class="fas fa-crown vip-icon"></i>
+                                        <input type="text" name="welcomeBannerUrl" class="text-input" placeholder="URL de votre image/GIF" value="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>">
+                                    </div>
+                                <% } else { %>
+                                    <div class="setting-locked">
+                                        <p>Cette fonctionnalité est réservée aux membres VIP.</p>
+                                        <button type="button" id="get-vip-btn" class="btn-vip-upgrade">Devenir VIP</button>
+                                    </div>
+                                <% } %>
+                            </div>
+                            <div class="preview-column">
+                                <label>Prévisualisation</label>
+                                <div class="discord-preview">
+                                    <div class="discord-message">
+                                        <img src="https://cdn.discordapp.com/embed/avatars/0.png" class="discord-avatar" alt="avatar">
+                                        <div class="discord-message-content">
+                                            <div class="discord-user-info">
+                                                <span class="discord-username">DraftBot</span>
+                                                <span class="discord-bot-tag">APP</span>
+                                            </div>
+                                            <div class="discord-text">
+                                                <p>Ho ! Un nouveau membre !</p>
+                                                <p>✨ Bienvenue <%= user.username %> ! ✨</p>
+                                            </div>
+                                            </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <label class="switch">
-                            <input type="checkbox" checked>
-                            <span class="slider round"></span>
-                        </label>
                     </div>
-                    <!-- Module Annonces -->
-                    <div class="module-card">
-                        <div class="module-icon announce"><i class="fas fa-bullhorn"></i></div>
-                        <div class="module-info">
-                            <h3>Annonces</h3>
-                            <p>Configurez des messages automatiques.</p>
+                </details>
+
+                <details class="module-accordion">
+                    <summary class="module-summary">
+                        </summary>
+                    <div class="module-content">
                         </div>
-                        <label class="switch">
-                            <input type="checkbox">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                     <!-- Module Accueil -->
-                    <div class="module-card">
-                        <div class="module-icon welcome"><i class="fas fa-users"></i></div>
-                        <div class="module-info">
-                            <h3>Accueil</h3>
-                            <p>Messages de bienvenue et d'au revoir.</p>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" checked>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <!-- Module Niveaux -->
-                    <div class="module-card">
-                        <div class="module-icon levels"><i class="fas fa-gamepad"></i></div>
-                        <div class="module-info">
-                            <h3>Niveaux</h3>
-                            <p>Système d'XP et de récompenses.</p>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
+                </details>
+
+                <div class="save-bar">
+                    <p id="save-status">Des changements non sauvegardés.</p>
+                    <button type="submit" class="btn-save">
+                        <i class="fas fa-save"></i> Enregistrer les changements
+                    </button>
                 </div>
-            </section>
+            </form>
         </main>
     </div>
+
+    <script>
+        // Script pour sauvegarder les données
+        const form = document.getElementById('settings-form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault(); // Empêche le rechargement de la page
+            
+            const formData = new FormData(form);
+            const guildId = window.location.pathname.split('/').pop();
+
+            // Prépare les données pour la section bienvenue
+            const welcomeData = {
+                enabled: formData.get('welcomeEnabled') === 'on',
+                channelId: formData.get('welcomeChannelId'),
+                message: formData.get('welcomeMessage'),
+                bannerUrl: formData.get('welcomeBannerUrl') || null
+            };
+
+            // Envoie les données à l'API de sauvegarde
+            fetch(`/api/settings/${guildId}/welcome`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(welcomeData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                const saveStatus = document.getElementById('save-status');
+                if (data.success) {
+                    saveStatus.textContent = 'Changements enregistrés avec succès !';
+                    saveStatus.style.color = '#2ecc71';
+                } else {
+                    saveStatus.textContent = 'Erreur lors de la sauvegarde.';
+                    saveStatus.style.color = '#e74c3c';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

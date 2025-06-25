@@ -1,8 +1,8 @@
 // =================================================================
 //        INDEX.JS COMPLET POUR LE PANEL WEB (AVEC EJS)
 // =================================================================
-// Version finale incluant la route pour la page de gestion
-// de serveur.
+// Version mise à jour pour gérer la sauvegarde des paramètres
+// de bienvenue / au revoir.
 // =================================================================
 
 // --- IMPORTS ---
@@ -14,12 +14,10 @@ const session = require('express-session');
 const ejs = require('ejs');
 require('dotenv').config();
 
-// --- INITIALISATION ---
+// --- INITIALISATION & CONFIGURATION ---
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
-
-// --- CONFIGURATION EJS ---
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'src', 'dashboard', 'views'));
 
@@ -37,12 +35,10 @@ app.use(session({
 // --- CONNEXION À LA BASE DE DONNÉES ---
 let db;
 const mongoClient = new MongoClient(process.env.DATABASE_URL);
-mongoClient.connect()
-    .then(() => {
-        console.log('✅ Panel web connecté à la base de données MongoDB !');
-        db = mongoClient.db('nexoprotect_db');
-    })
-    .catch(err => console.error("❌ Erreur de connexion à MongoDB:", err));
+mongoClient.connect().then(() => {
+    console.log('✅ Panel web connecté à la base de données MongoDB !');
+    db = mongoClient.db('nexoprotect_db');
+}).catch(err => console.error("❌ Erreur de connexion à MongoDB:", err));
 
 
 // --- ROUTES DE L'APPLICATION ---
@@ -121,40 +117,107 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
-
-// NOUVELLE ROUTE : Page de gestion d'un serveur spécifique
+// Page de gestion de serveur
 app.get('/manage/:guildId', async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/');
-    }
+    if (!req.session.user) return res.redirect('/');
     
-    // Pour la sécurité, on pourrait vérifier que l'utilisateur est bien admin du serveur qu'il essaie de gérer
-    // et que le bot y est présent. Pour l'instant, on fait confiance au lien cliqué.
-
     try {
-        // On récupère les infos du serveur depuis l'API Discord pour avoir le nom et l'icône à jour
-        const guildResponse = await fetch(`https://discord.com/api/guilds/${req.params.guildId}`, {
-            // Note: Utiliser un token de bot ici est plus fiable que celui de l'utilisateur
-            headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` }
-        });
-        if (!guildResponse.ok) throw new Error('Impossible de récupérer les informations du serveur.');
+        const discordApi = 'https://discord.com/api/v10';
+        const botAuthHeader = { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` };
+
+        // 1. Récupérer les infos du serveur
+        const guildResponse = await fetch(`${discordApi}/guilds/${req.params.guildId}`, { headers: botAuthHeader });
         const guildData = await guildResponse.json();
-        
-        // On récupère les infos de l'utilisateur (comme pour le dashboard)
+
+        // 2. Récupérer les salons textuels du serveur
+        const channelsResponse = await fetch(`${discordApi}/guilds/${req.params.guildId}/channels`, { headers: botAuthHeader });
+        const channelsData = await channelsResponse.json();
+        const textChannels = channelsData.filter(c => c.type === 0);
+
+        // 3. Récupérer les infos de l'utilisateur (VIP, etc.)
         const usersCollection = db.collection('users');
         const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
         let grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
         const user = { ...req.session.user, grade };
-        
-        // On rend la nouvelle page 'manage-server.ejs' avec les données
+
+        // 4. Récupérer les paramètres actuels du serveur depuis notre DB
+        const settingsCollection = db.collection('settings');
+        const guildSettings = await settingsCollection.findOne({ guildId: req.params.guildId });
+
         res.render('manage-server', {
-            user: user,
-            guild: guildData
+            user,
+            guild: guildData,
+            channels: textChannels,
+            settings: guildSettings || {}
         });
 
     } catch (error) {
         console.error("Erreur de chargement de la page de gestion:", error);
         res.status(500).send("Erreur lors du chargement de la page de gestion.");
+    }
+});
+
+
+// --- ROUTES API ---
+
+// API pour SAUVEGARDER les paramètres de bienvenue
+app.post('/api/settings/:guildId/welcome', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
+    
+    try {
+        const settingsCollection = db.collection('settings');
+        const { enabled, channelId, message, bannerUrl } = req.body;
+
+        const usersCollection = db.collection('users');
+        const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
+        const isVip = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date());
+        
+        const updateData = {
+            'welcome.enabled': enabled,
+            'welcome.channelId': channelId,
+            'welcome.message': message,
+        };
+        if (isVip) {
+            updateData['welcome.bannerUrl'] = bannerUrl;
+        }
+
+        await settingsCollection.updateOne(
+            { guildId: req.params.guildId },
+            { $set: updateData },
+            { upsert: true }
+        );
+
+        res.json({ success: true, message: 'Paramètres de bienvenue enregistrés !' });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur serveur lors de la sauvegarde.' });
+    }
+});
+
+// API pour SAUVEGARDER les paramètres d'au revoir
+app.post('/api/settings/:guildId/goodbye', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
+    
+    try {
+        const settingsCollection = db.collection('settings');
+        const { enabled, channelId, message } = req.body;
+        
+        const updateData = {
+            'goodbye.enabled': enabled,
+            'goodbye.channelId': channelId,
+            'goodbye.message': message,
+        };
+
+        await settingsCollection.updateOne(
+            { guildId: req.params.guildId },
+            { $set: updateData },
+            { upsert: true }
+        );
+
+        res.json({ success: true, message: 'Paramètres d\'au revoir enregistrés !' });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur serveur lors de la sauvegarde.' });
     }
 });
 
