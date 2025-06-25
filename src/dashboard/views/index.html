@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexoProtect - Le Gardien de Votre Communauté</title>
     
-    <!--
-      CORRECTION IMPORTANTE :
-      Le chemin vers le CSS doit commencer par un "/" pour partir de la racine du dossier public.
-    -->
+    <!-- CORRECTION: Chemin du CSS corrigé -->
     <link rel="stylesheet" href="/css/style.css">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +18,7 @@
     <header class="navbar">
         <div class="container">
             <a href="#hero" class="logo">
-                <!-- CORRECTION : Les images aussi partent du dossier /images/ -->
+                <!-- CORRECTION: Chemin de l'image corrigé -->
                 <img src="/images/NexoProtect-removebg-preview.png" alt="Logo NexoProtect">
                 <span class="logo-text">NexoProtect</span>
             </a>
@@ -32,7 +29,7 @@
                 <a href="#blacklist" class="nav-link">Blacklist</a>
                 <a href="#" class="nav-link">Statistiques</a>
                 <a href="#" class="nav-link">CGU</a>
-                <!-- Le lien vers le panel est correct car c'est une URL complète -->
+                <!-- Ce lien est pour connecter un UTILISATEUR, il est correct -->
                 <a href="https://discord.com/oauth2/authorize?client_id=1385350518267973802&response_type=code&redirect_uri=https%3A%2F%2Fnexoprotect.onrender.com%2Fcallback&scope=identify+guilds" class="btn btn-secondary">
                     <i class="fas fa-user-shield"></i> Panel
                 </a>
@@ -46,12 +43,13 @@
                 <div class="hero-text">
                     <h1>Le Gardien Indispensable pour Votre Serveur Discord</h1>
                     <p>Modération automatique, engagement communautaire et outils de gestion puissants. Laissez NexoProtect sécuriser et dynamiser votre communauté.</p>
-                    <a href="#" class="btn btn-primary">
+                    <!-- CORRECTION: Lien pour INVITER LE BOT -->
+                    <a href="https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&permissions=8&scope=bot%20applications.commands" class="btn btn-primary">
                         <i class="fab fa-discord"></i> Ajouter à Discord
                     </a>
                 </div>
                 <div class="hero-image">
-                     <!-- CORRECTION : Les images aussi partent du dossier /images/ -->
+                    <!-- CORRECTION: Chemin de l'image corrigé -->
                     <img src="/images/NexoProtect-removebg-preview.png" alt="Bouclier NexoProtect" class="hero-logo-main">
                 </div>
             </div>
@@ -86,7 +84,7 @@
                 <p class="team-subtitle">Une équipe de passionnés, engagés pour la lutte contre les RAIDS</p>
                 <div class="team-grid">
                     <div class="team-member-card">
-                         <!-- CORRECTION : Les images aussi partent du dossier /images/ -->
+                        <!-- CORRECTION: Chemin de l'image corrigé -->
                         <img src="/images/icegif-1215.gif" alt="Photo de profil de Pottedmbz__" class="team-pfp">
                         <h3>Pottedmbz__</h3>
                         <p class="team-role">Fondateur</p>
@@ -118,7 +116,8 @@
             <div class="container">
                 <h2>Prêt à sécuriser votre communauté ?</h2>
                 <p>Invitez NexoProtect et profitez d'un serveur plus sûr et plus actif en quelques clics.</p>
-                <a href="#" class="btn btn-primary">
+                <!-- CORRECTION: Lien pour INVITER LE BOT -->
+                <a href="https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&permissions=8&scope=bot%20applications.commands" class="btn btn-primary">
                     <i class="fab fa-discord"></i> Ajouter à Discord
                 </a>
             </div>
@@ -158,7 +157,7 @@
         </div>
     </footer>
 
-    <!-- CORRECTION : Le script aussi doit partir du dossier /js/ -->
+    <!-- CORRECTION: Chemin du script corrigé -->
     <script src="/js/script.js"></script>
 </body>
 </html>

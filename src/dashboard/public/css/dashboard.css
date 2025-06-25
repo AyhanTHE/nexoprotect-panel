@@ -1,8 +1,10 @@
-/* dashboard.css */
+/* dashboard.css (Version améliorée) */
 
 :root {
     --neon-blue: #00aaff;
-    --neon-glow: rgba(0, 170, 255, 0.5);
+    --neon-glow-blue: rgba(0, 170, 255, 0.6);
+    --discord-blurple: #5865F2;
+    --neon-glow-blurple: rgba(88, 101, 242, 0.6);
     --card-bg: #1f1f3a;
     --card-border: #2a2a4c;
     --text-primary: #f0f0f0;
@@ -10,7 +12,7 @@
 }
 
 body {
-    background-color: #1a1a2e; /* Assure que le fond est le même que la page d'accueil */
+    background-color: #1a1a2e;
 }
 
 .dashboard-container {
@@ -37,14 +39,12 @@ body {
     font-size: 1.2rem;
 }
 
-/* Grille pour les serveurs */
 .server-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 1.5rem;
 }
 
-/* Carte pour chaque serveur */
 .server-card {
     background-color: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -53,45 +53,75 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    text-align: center;
     text-decoration: none;
     color: var(--text-primary);
     position: relative;
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* L'effet néon au survol */
-.server-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow);
-    border-color: var(--neon-blue);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .server-icon {
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
     object-fit: cover;
     margin-bottom: 1rem;
-    background-color: #333; /* Fond pour les icônes qui ne chargent pas */
+    background-color: #333;
 }
 
 .server-name {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 600;
     margin-bottom: 1.5rem;
+    min-height: 48px; /* Empêche le décalage si le nom est sur 1 ou 2 lignes */
 }
 
-.manage-button {
-    background-color: var(--neon-blue);
-    color: #fff;
-    padding: 0.6rem 1.2rem;
+.card-footer {
+    margin-top: auto;
+    width: 100%;
+}
+
+/* Style commun pour les deux boutons */
+.btn-manage, .btn-invite {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: none;
     border-radius: 8px;
     font-weight: 600;
-    transition: background-color 0.3s ease;
-    margin-top: auto; /* Pousse le bouton en bas de la carte */
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
 }
 
-.server-card:hover .manage-button {
-    background-color: #00c3ff;
+/* Style spécifique pour le bouton "Gérer" */
+.btn-manage {
+    background-color: var(--neon-blue);
+    color: #fff;
+}
+
+/* Style spécifique pour le bouton "Inviter" */
+.btn-invite {
+    background-color: var(--discord-blurple);
+    color: #fff;
+}
+
+/* Effets de survol avec néon */
+.server-card:hover {
+    transform: translateY(-10px);
+}
+
+.server-card:hover .btn-manage {
+    box-shadow: 0 0 15px var(--neon-glow-blue), 0 0 30px var(--neon-glow-blue);
+    background-color: #33bbff;
+}
+
+.server-card:hover .btn-invite {
+    box-shadow: 0 0 15px var(--neon-glow-blurple), 0 0 30px var(--neon-glow-blurple);
+    background-color: #7289da;
 }
