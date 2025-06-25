@@ -14,6 +14,7 @@
 
     <div class="dashboard-layout">
 
+        <!-- Menu latéral pour le profil -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="/" class="logo">
@@ -39,19 +40,24 @@
                 <a href="#" class="nav-item"><i class="fas fa-cog"></i> Paramètres</a>
             </nav>
 
+            <!-- NOUVEAU : Logique d'affichage des boutons -->
             <div class="sidebar-footer">
                 <% if (user) { %>
-                    <button id="claim-vip-btn" class="btn-vip" <%= user.grade === 'VIP' ? 'disabled' : '' %>>
-                        <i class="fas fa-star"></i> 
-                        <span><%= user.grade === 'VIP' ? 'VIP Actif' : 'Réclamer VIP' %></span>
-                    </button>
-            
-                    <a href="/premium" class="btn-premium">
-                        <i class="fas fa-gem"></i>
-                        <span>Devenir Premium</span>
-                    </a>
+                    <% if (user.grade !== 'VIP') { %>
+                        <!-- Ces boutons ne s'affichent que si l'utilisateur N'EST PAS VIP -->
+                        <button id="claim-vip-btn" class="btn-vip">
+                            <i class="fas fa-star"></i> 
+                            <span>Réclamer VIP</span>
+                        </button>
+                        <a href="/premium" class="btn-premium">
+                            <i class="fas fa-gem"></i>
+                            <span>Devenir Premium</span>
+                        </a>
+                    <% } %>
+                    <!-- Si l'utilisateur est VIP, les boutons ci-dessus sont masqués -->
                 <% } %>
             
+                <!-- Le bouton de déconnexion est toujours visible -->
                 <a href="/logout" class="btn-logout">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Déconnexion</span>
@@ -59,6 +65,7 @@
             </div>
         </aside>
 
+        <!-- Contenu principal pour les serveurs -->
         <main class="main-content">
             <header class="main-header">
                 <h1>Mes Serveurs</h1>
@@ -92,7 +99,6 @@
     </div>
     
     <script>
-        // Le script pour le bouton VIP reste le même
         document.addEventListener('DOMContentLoaded', () => {
             const claimVipBtn = document.getElementById('claim-vip-btn');
             if (claimVipBtn) {

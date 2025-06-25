@@ -127,7 +127,7 @@ app.post('/api/create-payment', async (req, res) => {
     request.requestBody({
         intent: 'CAPTURE',
         purchase_units: [{
-            amount: { currency_code: 'EUR', value: '1.00' },
+            amount: { currency_code: 'EUR', value: '5.00' },
             description: `Abonnement Premium 1 mois pour ${req.session.user.username}`,
             custom_id: req.session.user.id
         }],
