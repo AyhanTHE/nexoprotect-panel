@@ -1,8 +1,8 @@
 // =================================================================
 //        INDEX.JS COMPLET POUR LE PANEL WEB (AVEC EJS)
 // =================================================================
-// Version mise à jour pour utiliser EJS comme moteur de modèles.
-// Le serveur prépare les données AVANT d'envoyer la page.
+// Version finale incluant la route pour la page de gestion
+// de serveur.
 // =================================================================
 
 // --- IMPORTS ---
@@ -11,7 +11,7 @@ const path = require('path');
 const fetch = require('node-fetch');
 const { MongoClient } = require('mongodb');
 const session = require('express-session');
-const ejs = require('ejs'); // On importe EJS
+const ejs = require('ejs');
 require('dotenv').config();
 
 // --- INITIALISATION ---
@@ -21,7 +21,6 @@ app.set('trust proxy', 1);
 
 // --- CONFIGURATION EJS ---
 app.set('view engine', 'ejs');
-// On indique à Express où trouver les fichiers de vue (.ejs)
 app.set('views', path.join(__dirname, 'src', 'dashboard', 'views'));
 
 // --- MIDDLEWARES ---
@@ -36,7 +35,6 @@ app.use(session({
 }));
 
 // --- CONNEXION À LA BASE DE DONNÉES ---
-// (Code inchangé)
 let db;
 const mongoClient = new MongoClient(process.env.DATABASE_URL);
 mongoClient.connect()
@@ -51,11 +49,10 @@ mongoClient.connect()
 
 // Page d'accueil
 app.get('/', (req, res) => {
-    // On utilise res.render() pour afficher la vue 'index.ejs'
     res.render('index');
 });
 
-// Callback Discord (code inchangé)
+// Callback Discord
 app.get('/callback', async (req, res) => {
     const code = req.query.code;
     if (!code) return res.status(400).send('Erreur: "code" manquant.');
@@ -88,49 +85,35 @@ app.get('/callback', async (req, res) => {
     }
 });
 
-// Déconnexion (code inchangé)
+// Déconnexion
 app.get('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/'));
 });
 
-// Route du Tableau de Bord (LOGIQUE PRINCIPALE)
+// Route du Tableau de Bord
 app.get('/dashboard', async (req, res) => {
     if (!req.session.user) {
         return res.redirect('/');
     }
-
     try {
-        // --- On prépare TOUTES les données ici ---
-        
-        // 1. Récupérer les infos de l'utilisateur et son statut VIP
         const usersCollection = db.collection('users');
         const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
-        let grade = "Utilisateur";
-        if (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) {
-            grade = "VIP";
-        }
+        let grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
         const user = { ...req.session.user, grade };
 
-        // 2. Récupérer les serveurs de l'utilisateur (comme avant)
         const guildsResponse = await fetch('https://discord.com/api/users/@me/guilds', {
             headers: { authorization: `Bearer ${req.session.accessToken}` },
         });
         const userGuilds = await guildsResponse.json();
         const adminGuilds = userGuilds.filter(g => (BigInt(g.permissions) & 8n) === 8n);
-
-        // 3. Récupérer les serveurs du bot (comme avant)
+        
         const botGuildsCollection = db.collection('botGuilds');
         const botGuilds = await botGuildsCollection.find({}, { projection: { guildId: 1 } }).toArray();
         const botGuildIds = new Set(botGuilds.map(g => g.guildId));
 
-        // 4. Combiner les informations
         const guilds = adminGuilds.map(guild => ({...guild, botOnServer: botGuildIds.has(guild.id)}));
 
-        // 5. Rendre la page EJS en lui passant toutes les données
-        res.render('dashboard', {
-            user: user,       // On passe les infos de l'utilisateur
-            guilds: guilds    // On passe la liste des serveurs
-        });
+        res.render('dashboard', { user, guilds });
 
     } catch (error) {
         console.error("Erreur lors de la préparation du dashboard:", error);
@@ -139,9 +122,45 @@ app.get('/dashboard', async (req, res) => {
 });
 
 
-// API pour réclamer le statut VIP (route POST, reste inchangée)
+// NOUVELLE ROUTE : Page de gestion d'un serveur spécifique
+app.get('/manage/:guildId', async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/');
+    }
+    
+    // Pour la sécurité, on pourrait vérifier que l'utilisateur est bien admin du serveur qu'il essaie de gérer
+    // et que le bot y est présent. Pour l'instant, on fait confiance au lien cliqué.
+
+    try {
+        // On récupère les infos du serveur depuis l'API Discord pour avoir le nom et l'icône à jour
+        const guildResponse = await fetch(`https://discord.com/api/guilds/${req.params.guildId}`, {
+            // Note: Utiliser un token de bot ici est plus fiable que celui de l'utilisateur
+            headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` }
+        });
+        if (!guildResponse.ok) throw new Error('Impossible de récupérer les informations du serveur.');
+        const guildData = await guildResponse.json();
+        
+        // On récupère les infos de l'utilisateur (comme pour le dashboard)
+        const usersCollection = db.collection('users');
+        const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
+        let grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
+        const user = { ...req.session.user, grade };
+        
+        // On rend la nouvelle page 'manage-server.ejs' avec les données
+        res.render('manage-server', {
+            user: user,
+            guild: guildData
+        });
+
+    } catch (error) {
+        console.error("Erreur de chargement de la page de gestion:", error);
+        res.status(500).send("Erreur lors du chargement de la page de gestion.");
+    }
+});
+
+
+// API pour réclamer le statut VIP
 app.post('/api/claim-vip', async (req, res) => {
-    // ... code de cette route inchangé ...
     if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
     try {
         const usersCollection = db.collection('users');

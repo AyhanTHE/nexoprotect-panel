@@ -1,0 +1,293 @@
+/* manage.css */
+
+:root {
+    --bg-primary: #10101a;
+    --bg-secondary: #181825;
+    --bg-tertiary: #202035;
+    --primary-accent: #6a5af9;
+    --primary-glow: rgba(106, 90, 249, 0.5);
+    --vip-gold: #ffd700;
+    --vip-glow: rgba(255, 215, 0, 0.6);
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --border-color: #2a2a4a;
+    --font-family: 'Poppins', sans-serif;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-family);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+.manage-layout {
+    display: flex;
+}
+
+/* --- Menu latéral (Sidebar) --- */
+.manage-sidebar {
+    width: 80px; /* Largeur quand il est fermé */
+    height: 100vh;
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    padding: 1.5rem 1rem;
+    box-sizing: border-box;
+    transition: width 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+.manage-sidebar:hover {
+    width: 280px; /* Largeur quand il est ouvert */
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.server-icon-large {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.server-name-large {
+    font-size: 1.2rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.manage-sidebar:hover .server-name-large {
+    opacity: 1;
+}
+
+.manage-nav {
+    flex-grow: 1;
+}
+
+.nav-category {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    white-space: nowrap;
+}
+.nav-category .fa-fw {
+    width: 24px;
+}
+.nav-category:hover, .nav-category.active {
+    background-color: var(--primary-accent);
+    color: #fff;
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+.nav-category span {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.manage-sidebar:hover .nav-category span {
+    opacity: 1;
+}
+
+.nav-divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 1rem 0;
+}
+
+.nav-title {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    padding: 0 0.8rem;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.manage-sidebar:hover .nav-title {
+    opacity: 1;
+}
+
+/* --- Section Profil en bas --- */
+.user-profile-section {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.profile-avatar-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.profile-text {
+    display: flex;
+    flex-direction: column;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.manage-sidebar:hover .profile-text {
+    opacity: 1;
+}
+.profile-grade.vip {
+    color: var(--vip-gold);
+    text-shadow: 0 0 8px var(--vip-glow);
+}
+
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem;
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+}
+.btn-back:hover {
+    background-color: var(--primary-accent);
+    color: #fff;
+}
+.btn-back span {
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.manage-sidebar:hover .btn-back span {
+    opacity: 1;
+}
+
+/* --- Contenu Principal --- */
+.manage-main-content {
+    margin-left: 80px; /* Largeur de la sidebar fermée */
+    padding: 2rem 3rem;
+    width: calc(100% - 80px);
+    transition: all 0.3s ease-in-out;
+}
+.manage-sidebar:hover ~ .manage-main-content {
+    margin-left: 280px;
+    width: calc(100% - 280px);
+}
+
+.manage-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+.manage-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+/* --- Cartes des Modules --- */
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+.module-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.module-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+.module-icon.mod { background: linear-gradient(45deg, #2980b9, #3498db); }
+.module-icon.announce { background: linear-gradient(45deg, #f39c12, #f1c40f); }
+.module-icon.welcome { background: linear-gradient(45deg, #27ae60, #2ecc71); }
+.module-icon.levels { background: linear-gradient(45deg, #8e44ad, #9b59b6); }
+
+.module-info {
+    flex-grow: 1;
+}
+.module-info h3 {
+    margin: 0 0 0.3rem 0;
+}
+.module-info p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* --- Interrupteur (Switch) --- */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+input:checked + .slider {
+  background-color: var(--primary-accent);
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--primary-accent);
+}
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+.slider.round {
+  border-radius: 34px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
