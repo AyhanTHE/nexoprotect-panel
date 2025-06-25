@@ -1,8 +1,8 @@
 // =================================================================
 //        INDEX.JS COMPLET POUR LE PANEL WEB (RENDER.COM)
 // =================================================================
-// Version mise à jour pour corriger le problème de redirection
-// en faisant confiance au proxy de Render.com.
+// Version mise à jour pour gérer l'affichage conditionnel des
+// boutons "Inviter" / "Gérer" dans le tableau de bord.
 // =================================================================
 
 // --- IMPORTS ---
@@ -23,24 +23,28 @@ app.set('trust proxy', 1);
 
 
 // --- MIDDLEWARES ---
+// Sert les fichiers statiques (CSS, JS client, images) depuis le dossier 'public'
 app.use(express.static(path.join(__dirname, 'src', 'dashboard', 'public')));
+// Permet à Express de comprendre les données envoyées en JSON
 app.use(express.json());
+// Permet à Express de comprendre les données des formulaires
 app.use(express.urlencoded({ extended: true }));
-
+// Middleware pour gérer les sessions utilisateur
 app.use(session({
+    // Ce secret sert à sécuriser les cookies de session.
+    // Pour une meilleure sécurité, placez-le dans vos variables d'environnement.
     secret: process.env.SESSION_SECRET || 'une-super-phrase-secrete-pour-nexoprotect',
     resave: false,
     saveUninitialized: false,
     cookie: {
         secure: true, // Doit être 'true' car Render est en HTTPS
         httpOnly: true, // Empêche l'accès au cookie via JavaScript côté client
-        maxAge: 1000 * 60 * 60 * 24 // 1 jour
+        maxAge: 1000 * 60 * 60 * 24 // Durée de vie du cookie de session (ici, 1 jour)
     }
 }));
 
 
 // --- CONNEXION À LA BASE DE DONNÉES ---
-// (Code inchangé)
 const mongoClient = new MongoClient(process.env.DATABASE_URL);
 let db;
 mongoClient.connect()
@@ -56,16 +60,17 @@ mongoClient.connect()
 
 // --- ROUTES DE L'APPLICATION ---
 
+// Route principale : affiche la page d'accueil
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'dashboard', 'views', 'index.html'));
 });
 
+// Route de Callback : gère le retour de l'authentification Discord
 app.get('/callback', async (req, res) => {
     const code = req.query.code;
     if (!code) return res.status(400).send('Erreur: "code" manquant.');
 
     try {
-        // ... (échange de code contre token)
         const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
             method: 'POST',
             body: new URLSearchParams({
@@ -85,14 +90,11 @@ app.get('/callback', async (req, res) => {
         });
         const userData = await userResponse.json();
 
-        // On sauvegarde les infos dans la session
         req.session.accessToken = tokenData.access_token;
         req.session.user = userData;
         
-        // Log pour vérifier que la session est bien sauvegardée AVANT la redirection
-        console.log(`[CALLBACK] Session sauvegardée pour l'utilisateur: ${req.session.user.username}`);
+        console.log(`[CALLBACK] Session sauvegardée pour: ${req.session.user.username}`);
 
-        // On s'assure que la session est bien enregistrée avant de rediriger
         req.session.save(() => {
             res.redirect('/dashboard');
         });
@@ -103,29 +105,62 @@ app.get('/callback', async (req, res) => {
     }
 });
 
+// Route du Tableau de Bord (page)
 app.get('/dashboard', (req, res) => {
-    // Log pour vérifier l'état de la session quand on arrive sur le dashboard
-    console.log(`[DASHBOARD] Tentative d'accès par:`, req.session.user ? req.session.user.username : 'Utilisateur non identifié');
-
     if (!req.session.user) {
         return res.redirect('/');
     }
     res.sendFile(path.join(__dirname, 'src', 'dashboard', 'views', 'dashboard.html'));
 });
 
-// (Les autres routes, comme /api/guilds, restent inchangées)
+// Route de Déconnexion
+app.get('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.redirect('/dashboard');
+        }
+        res.clearCookie('connect.sid');
+        res.redirect('/');
+    });
+});
+
+
+// API pour obtenir la liste des serveurs de l'utilisateur
 app.get('/api/guilds', async (req, res) => {
     if (!req.session.accessToken) {
         return res.status(401).json({ error: 'Non authentifié' });
     }
+    if (!db) {
+        return res.status(503).json({ error: 'Service momentanément indisponible' });
+    }
+
     try {
+        // 1. Récupérer les serveurs où l'utilisateur est admin via l'API Discord
         const guildsResponse = await fetch('https://discord.com/api/users/@me/guilds', {
             headers: { authorization: `Bearer ${req.session.accessToken}` },
         });
-        const guilds = await guildsResponse.json();
-        const adminGuilds = guilds.filter(guild => (BigInt(guild.permissions) & 8n) === 8n);
-        res.json(adminGuilds);
+        const userGuilds = await guildsResponse.json();
+        if (!Array.isArray(userGuilds)) throw new Error('Réponse invalide de l\'API Discord');
+        
+        const adminGuilds = userGuilds.filter(guild => (BigInt(guild.permissions) & 8n) === 8n);
+
+        // 2. Récupérer la liste des serveurs où le BOT est présent depuis la base de données
+        // IMPORTANT : Votre bot doit écrire dans cette collection quand il rejoint/quitte un serveur !
+        const botGuildsCollection = db.collection('botGuilds');
+        const botGuildsCursor = botGuildsCollection.find({}, { projection: { guildId: 1 } });
+        const botGuilds = await botGuildsCursor.toArray();
+        const botGuildIds = new Set(botGuilds.map(g => g.guildId));
+
+        // 3. Comparer les deux listes et ajouter un indicateur `botOnServer`
+        const result = adminGuilds.map(guild => ({
+            ...guild,
+            botOnServer: botGuildIds.has(guild.id)
+        }));
+
+        res.json(result);
+
     } catch (error) {
+        console.error("Erreur dans /api/guilds:", error);
         res.status(500).json({ error: 'Erreur interne du serveur' });
     }
 });

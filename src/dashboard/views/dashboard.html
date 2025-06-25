@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexoProtect - Tableau de Bord</title>
-    <!-- On charge le même style que l'accueil pour la navbar -->
+    <!-- On charge les fichiers CSS. Assurez-vous qu'ils existent aux bons emplacements. -->
     <link rel="stylesheet" href="/css/style.css">
-    <!-- Et on charge un nouveau fichier CSS juste pour le dashboard -->
     <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- On charge Font Awesome pour les icônes (engrenage, logo Discord) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 </head>
 <body>
 
@@ -21,67 +22,87 @@
                 <span class="logo-text">NexoProtect</span>
             </a>
             <nav>
-                <!-- On pourrait ajouter un bouton de déconnexion ici plus tard -->
-                <a href="/" class="nav-link">Retour à l'accueil</a>
+                <a href="/logout" class="nav-link">Déconnexion</a>
             </nav>
         </div>
     </header>
 
     <main class="dashboard-container">
         <h1>Sélectionnez un serveur</h1>
-        <p>Voici les serveurs où vous avez les permissions d'administrateur.</p>
+        <p>Voici les serveurs où vous disposez des permissions d'administrateur.</p>
 
-        <!-- Ce conteneur va être rempli par notre JavaScript -->
+        <!-- Ce conteneur sera rempli dynamiquement par le script ci-dessous -->
         <div id="server-list" class="server-grid">
-            <!-- Message de chargement -->
             <div id="loading-message">Chargement de vos serveurs...</div>
         </div>
     </main>
 
     <script>
-        // Ce script s'exécute côté client, dans le navigateur de l'utilisateur
-
+        // Ce script s'exécute dans le navigateur de l'utilisateur
         document.addEventListener('DOMContentLoaded', () => {
             const serverListElement = document.getElementById('server-list');
             const loadingMessage = document.getElementById('loading-message');
 
-            // On appelle notre propre API pour récupérer les serveurs
+            // On appelle l'API de notre serveur pour récupérer la liste des serveurs
             fetch('/api/guilds')
                 .then(response => {
                     if (!response.ok) {
+                        // Si le serveur répond avec une erreur (ex: 401, 500)
                         throw new Error(`Erreur HTTP: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(guilds => {
-                    loadingMessage.style.display = 'none'; // On cache le message de chargement
+                    // Une fois les données reçues, on cache le message de chargement
+                    loadingMessage.style.display = 'none';
 
                     if (guilds.length === 0) {
                         serverListElement.innerHTML = '<p class="no-servers">Aucun serveur administrable trouvé.</p>';
                         return;
                     }
 
-                    // Pour chaque serveur, on crée une "carte"
+                    // On boucle sur chaque serveur reçu pour créer une carte
                     guilds.forEach(guild => {
-                        const iconUrl = guild.icon 
+                        // On construit l'URL de l'icône du serveur
+                        const iconUrl = guild.icon
                             ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
                             : '/images/default-icon.png'; // Prévoir une icône par défaut
-
-                        const serverCard = document.createElement('a');
-                        serverCard.className = 'server-card';
-                        // Plus tard, ce lien mènera à la page de gestion de ce serveur
-                        serverCard.href = `/manage/${guild.id}`;
-
-                        serverCard.innerHTML = `
-                            <img src="${iconUrl}" alt="Icône du serveur" class="server-icon">
-                            <span class="server-name">${guild.name}</span>
-                            <span class="manage-button">Administrer</span>
-                        `;
                         
+                        const serverCard = document.createElement('div');
+                        serverCard.className = 'server-card';
+
+                        let buttonHtml = '';
+                        // Logique pour afficher le bon bouton
+                        if (guild.botOnServer) {
+                            // Le bot est sur le serveur : bouton "Gérer"
+                            buttonHtml = `
+                                <a href="/manage/${guild.id}" class="btn-manage">
+                                    <i class="fas fa-cogs"></i> Gérer le serveur
+                                </a>`;
+                        } else {
+                            // Le bot n'est PAS sur le serveur : bouton "Inviter"
+                            // On construit un lien d'invitation qui présélectionne le serveur
+                            const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&guild_id=${guild.id}&permissions=8&scope=bot%20applications.commands`;
+                            buttonHtml = `
+                                <a href="${inviteUrl}" target="_blank" class="btn-invite">
+                                    <i class="fab fa-discord"></i> Inviter sur le Serveur
+                                </a>`;
+                        }
+
+                        // On construit le HTML complet de la carte du serveur
+                        serverCard.innerHTML = `
+                            <img src="${iconUrl}" alt="Icône du serveur" class="server-icon" onerror="this.src='/images/default-icon.png'">
+                            <span class="server-name">${guild.name}</span>
+                            <div class="card-footer">
+                                ${buttonHtml}
+                            </div>
+                        `;
+                        // On ajoute la carte à la grille
                         serverListElement.appendChild(serverCard);
                     });
                 })
                 .catch(error => {
+                    // En cas d'erreur de communication avec notre API
                     console.error('Erreur lors de la récupération des serveurs:', error);
                     loadingMessage.innerHTML = 'Impossible de charger vos serveurs. Veuillez réessayer plus tard.';
                     loadingMessage.style.color = '#ff6b6b';
