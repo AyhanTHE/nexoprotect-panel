@@ -8,8 +8,8 @@ const path = require('path');
 const fetch = require('node-fetch');
 const { MongoClient } = require('mongodb');
 const session = require('express-session');
-// MODIFICATION MAJEURE : Importation de la librairie PayPal
-const paypal = require('@paypal/checkout-server-sdk');
+// MODIFICATION MAJEURE : On "déstructure" l'importation de PayPal
+const paypalSDK = require('@paypal/checkout-server-sdk');
 require('dotenv').config();
 
 // --- INITIALISATION & CONFIGURATION ---
@@ -41,9 +41,9 @@ mongoClient.connect().then(() => {
 
 // --- CONFIGURATION DU CLIENT PAYPAL ---
 const Environment = process.env.NODE_ENV === 'production'
-  ? paypal.core.LiveEnvironment
-  : paypal.core.SandboxEnvironment;
-const paypalClient = new paypal.core.PayPalHttpClient(
+  ? paypalSDK.core.LiveEnvironment
+  : paypalSDK.core.SandboxEnvironment;
+const paypalClient = new paypalSDK.core.PayPalHttpClient(
     new Environment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
 );
 
@@ -68,8 +68,7 @@ app.get('/premium', (req, res) => {
 // CRÉER LA COMMANDE PAYPAL
 app.post('/api/create-payment', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
-    // CORRIGÉ : Utilisation directe de l'objet paypal importé
-    const request = new paypal.orders.OrdersCreateRequest();
+    const request = new paypalSDK.orders.OrdersCreateRequest();
     request.prefer("return=representation");
     request.requestBody({
         intent: 'CAPTURE',
@@ -107,10 +106,14 @@ app.get('/payment-cancel', (req, res) => {
 
 // GESTION DES WEBHOOKS PAYPAL
 app.post('/api/paypal-webhook', async (req, res) => {
+    if (!paypalSDK.webhooks) {
+        console.error('❌ FATAL: paypalSDK.webhooks est indéfini. Problème de version du SDK.');
+        return res.sendStatus(500);
+    }
+    
     const webhookId = process.env.PAYPAL_WEBHOOK_ID; 
+    const request = new paypalSDK.webhooks.WebhookVerificationRequest(req.headers, req.body, webhookId);
 
-    // CORRIGÉ : Utilisation directe de l'objet paypal importé
-    const request = new paypal.webhooks.WebhookVerificationRequest(req.headers, req.body, webhookId);
     try {
         await paypalClient.execute(request);
         const event = JSON.parse(req.body);
@@ -148,4 +151,3 @@ app.post('/api/claim-vip', async (req, res) => { /* ... */ });
 
 // --- DÉMARRAGE DU SERVEUR ---
 app.listen(PORT, () => console.log(`✅ Serveur web du panel démarré et à l'écoute sur le port ${PORT}`));
-
