@@ -66,11 +66,9 @@
                 <a href="#" class="nav-item"><i class="fas fa-cog"></i> Paramètres</a>
             </nav>
 
-            <!-- NOUVEAU : Logique d'affichage des boutons -->
             <div class="sidebar-footer">
                 <% if (user) { %>
                     <% if (user.grade !== 'VIP') { %>
-                        <!-- Ces boutons ne s'affichent que si l'utilisateur N'EST PAS VIP -->
                         <button id="claim-vip-btn" class="btn-vip">
                             <i class="fas fa-star"></i> 
                             <span>Réclamer VIP</span>
@@ -80,10 +78,7 @@
                             <span>Devenir Premium</span>
                         </a>
                     <% } %>
-                    <!-- Si l'utilisateur est VIP, les boutons ci-dessus sont masqués -->
                 <% } %>
-            
-                <!-- Le bouton de déconnexion est toujours visible -->
                 <a href="/logout" class="btn-logout">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Déconnexion</span>
@@ -101,7 +96,6 @@
             <div class="premium-content">
                 <div class="premium-card">
                     
-                    <!-- Le message de succès s'affiche si l'URL contient ?message=success OU si l'utilisateur est déjà VIP -->
                     <% if (message === 'success' || (user && user.grade === 'VIP')) { %>
                         <div class="status-message success">
                             <i class="fas fa-check-circle"></i> Merci pour votre soutien ! Votre abonnement Premium est maintenant actif.
@@ -130,7 +124,6 @@
                         <p>Les paiements sont gérés via PayPal. Toute ouverture de litige sur PayPal dans le but d'obtenir un remboursement frauduleux entraînera une révocation immédiate de vos avantages et une exclusion permanente (blacklist) de tous nos services.</p>
                     </div>
 
-                    <!-- NOUVEAU : Le bouton de paiement ne s'affiche que si l'utilisateur n'est pas VIP -->
                     <% if (user && user.grade !== 'VIP') { %>
                         <button id="payment-btn" class="btn-payment">
                             <i class="fab fa-paypal"></i> Procéder au paiement
@@ -138,12 +131,37 @@
                     <% } %>
                 </div>
             </div>
+
+            <!-- NOUVELLE SECTION STATISTIQUES -->
+            <% if (stats) { %>
+            <div class="stats-section">
+                <div class="stat-card">
+                    <i class="fas fa-crown"></i>
+                    <h3><%= stats.vipCount %></h3>
+                    <p>VIP Actifs</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-gavel"></i>
+                    <h3><%= stats.bannedCount %></h3>
+                    <p>Membres Bannis</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-briefcase"></i>
+                    <h3>1 mois</h3>
+                    <p>d'Expérience</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3><%= stats.serverCount %></h3>
+                    <p>Serveurs Protégés</p>
+                </div>
+            </div>
+            <% } %>
         </main>
     </div>
     
     <script>
         const paymentBtn = document.getElementById('payment-btn');
-        // Le script ne s'exécute que si le bouton existe sur la page
         if (paymentBtn) {
             paymentBtn.addEventListener('click', () => {
                 paymentBtn.disabled = true;

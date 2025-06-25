@@ -402,3 +402,407 @@ body {
     gap: 1rem; /* Même espacement que les nav-items */
     padding-left: 1rem;
 }
+/* ================================== */
+/* STYLE POUR LE DASHBOARD            */
+/* ================================== */
+
+/* --- Variables Globales --- */
+:root {
+    --bg-primary: #10101a;
+    --bg-secondary: #181825;
+    --bg-tertiary: #202035;
+    --primary-accent: #6a5af9;
+    --primary-glow: rgba(106, 90, 249, 0.5);
+    --vip-gold: #ffd700;
+    --vip-glow: rgba(255, 215, 0, 0.6);
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --border-color: #2a2a4a;
+    --font-family: 'Poppins', sans-serif;
+}
+
+/* --- Base --- */
+body {
+    margin: 0;
+    font-family: var(--font-family);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+.dashboard-layout {
+    display: flex;
+}
+
+/* --- Menu Latéral (Sidebar) --- */
+.sidebar {
+    width: 280px;
+    height: 100vh;
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    padding: 1.5rem;
+    box-sizing: border-box;
+}
+
+.sidebar-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+}
+
+.sidebar-header .logo img {
+    width: 40px;
+    height: 40px;
+}
+
+/* --- Carte de Profil --- */
+.profile-card {
+    background-color: var(--bg-tertiary);
+    border-radius: 12px;
+    padding-top: 50px;
+    margin-bottom: 2rem;
+    position: relative;
+    text-align: center;
+}
+
+.profile-banner {
+    background: linear-gradient(45deg, var(--primary-accent), #c724b1);
+    height: 60px;
+    border-radius: 12px 12px 0 0;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 4px solid var(--bg-secondary);
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.profile-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0.5rem 0;
+}
+
+.profile-grade {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    background-color: rgba(0,0,0,0.2);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.profile-grade.vip {
+    background-color: rgba(255, 215, 0, 0.1);
+    color: var(--vip-gold);
+    text-shadow: 0 0 10px var(--vip-glow);
+}
+
+/* --- Navigation & Footer de la Sidebar --- */
+.sidebar-nav {
+    flex-grow: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.nav-item:hover, .nav-item.active {
+    background-color: var(--primary-accent);
+    color: #fff;
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.btn-vip, .btn-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-vip {
+    background-color: var(--vip-gold);
+    color: #000;
+}
+.btn-vip:hover:not(:disabled) {
+    box-shadow: 0 0 20px var(--vip-glow);
+    transform: scale(1.05);
+}
+.btn-vip:disabled {
+    background-color: #6d5d00;
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+.btn-logout {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+.btn-logout:hover {
+    background-color: #f04747;
+    color: #fff;
+}
+
+/* --- Contenu Principal --- */
+.main-content {
+    margin-left: 280px; /* Doit correspondre à la largeur de la sidebar */
+    padding: 2rem;
+    width: calc(100% - 280px);
+}
+
+.main-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.main-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* --- Cartes des Serveurs --- */
+.server-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.server-card {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.server-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.card-background {
+    height: 100px;
+    background-size: cover;
+    background-position: center;
+    filter: blur(8px) brightness(0.4);
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1;
+}
+
+.card-content {
+    position: relative;
+    z-index: 2;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.server-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    border: 2px solid #fff;
+}
+
+.server-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.card-footer {
+    position: relative;
+    z-index: 2;
+    background-color: rgba(0,0,0,0.2);
+    padding: 1rem;
+}
+
+.btn-manage, .btn-invite {
+    display: block;
+    width: 90%;
+    margin: 0 auto;
+    padding: 0.7rem;
+    border: none;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 600;
+    color: #fff;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-manage {
+    background: var(--primary-accent);
+}
+.btn-manage:hover {
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+
+.btn-invite {
+    background: #5865F2; /* Discord Blurple */
+}
+.btn-invite:hover {
+    box-shadow: 0 0 20px rgba(88, 101, 242, 0.6);
+}
+
+/* ================================== */
+/* NOUVEAU STYLE POUR BOUTON PREMIUM  */
+/* ================================== */
+
+.btn-premium {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: var(--vip-gold);
+    color: #000; /* Texte noir pour un meilleur contraste sur fond jaune */
+    text-shadow: 0 0 2px rgba(0,0,0,0.2);
+}
+
+/* ================================== */
+/* STYLE POUR LA PAGE PREMIUM         */
+/* ================================== */
+
+.premium-content {
+    margin-top: 2rem;
+}
+
+.premium-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.premium-card h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.premium-card p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.price-tag {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--vip-gold);
+    margin: 2rem 0;
+    text-shadow: 0 0 15px var(--vip-glow);
+}
+
+.price-tag .per-month {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    text-shadow: none;
+}
+
+.warning-box {
+    background-color: rgba(255, 215, 0, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-left: 4px solid var(--vip-gold);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin: 2.5rem 0;
+    text-align: left;
+}
+
+.warning-box h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.warning-box p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.btn-payment {
+    display: inline-block;
+    background-color: #0070BA; /* Bleu officiel de PayPal */
+    color: #fff;
+    padding: 1rem 2.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.2rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-payment:hover {
+    background-color: #005ea6;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(0, 112, 186, 0.5);
+}
+
+.btn-premium:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px var(--vip-glow); /* Effet néon au survol */
+}
+
+/* On ajoute un span aux boutons pour un alignement parfait */
+.btn-logout span, .btn-premium span, .btn-vip span {
+    flex-grow: 1;
+    text-align: center;
+}
+
+/* Ajustement pour que l'icône et le texte soient mieux répartis */
+.btn-logout, .btn-premium, .btn-vip {
+    justify-content: flex-start;
+    text-align: left;
+    gap: 1rem; /* Même espacement que les nav-items */
+    padding-left: 1rem;
+}

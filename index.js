@@ -1,5 +1,5 @@
 // =================================================================
-//      INDEX.JS COMPLET AVEC ACTIVATION PAR REDIRECTION
+//      INDEX.JS AVEC AJOUT DES STATISTIQUES
 // =================================================================
 
 // --- IMPORTS ---
@@ -53,7 +53,6 @@ app.get('/callback', async (req, res) => { const code = req.query.code; if (!cod
 app.get('/dashboard', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
     try {
-        // CORRIGÉ : Utilisation de la collection 'premiumsubscriptions'
         const premiumCollection = db.collection('premiumsubscriptions');
         const userDbInfo = await premiumCollection.findOne({ userId: req.session.user.id });
         const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
@@ -81,7 +80,6 @@ app.get('/manage/:guildId', async (req, res) => {
         if (!guildResponse.ok) throw new Error('Impossible de récupérer les infos du serveur.');
         const [guildData, channelsData, rolesData] = await Promise.all([ guildResponse.json(), channelsResponse.json(), rolesResponse.json() ]);
         const botMember = botMemberResponse.ok ? await botMemberResponse.json() : null;
-        // CORRIGÉ : Utilisation de la collection 'premiumsubscriptions'
         const [userDbInfo, guildSettings] = await Promise.all([
             db.collection('premiumsubscriptions').findOne({ userId: req.session.user.id }),
             db.collection('settings').findOne({ guildId: req.params.guildId })
@@ -107,15 +105,35 @@ app.get('/manage/:guildId', async (req, res) => {
 app.get('/premium', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
     try {
-        // CORRIGÉ : Utilisation de la collection 'premiumsubscriptions'
-        const premiumCollection = db.collection('premiumsubscriptions');
-        const userDbInfo = await premiumCollection.findOne({ userId: req.session.user.id });
+        // Récupérer les données pour le grade et les statistiques en parallèle
+        const [userDbInfo, vipCount, serverCount] = await Promise.all([
+            db.collection('premiumsubscriptions').findOne({ userId: req.session.user.id }),
+            db.collection('premiumsubscriptions').countDocuments({ vipExpires: { $gt: new Date() } }),
+            db.collection('botGuilds').countDocuments()
+            // NOTE : Le nombre de bannis est un placeholder. Vous devrez implémenter la logique pour le récupérer.
+        ]);
+
         const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
         const user = { ...req.session.user, grade };
-        res.render('premium', { user: user, message: req.query.message || null });
+
+        const stats = {
+            vipCount: vipCount,
+            bannedCount: 0, // Placeholder
+            serverCount: serverCount
+        };
+
+        res.render('premium', {
+            user: user,
+            message: req.query.message || null,
+            stats: stats // Envoyer les statistiques à la page
+        });
     } catch (error) {
         console.error("Erreur lors du chargement de la page premium:", error);
-        res.render('premium', { user: req.session.user, message: req.query.message || null });
+        res.render('premium', {
+            user: req.session.user,
+            message: req.query.message || null,
+            stats: { vipCount: 0, bannedCount: 0, serverCount: 0 } // Statistiques par défaut en cas d'erreur
+        });
     }
 });
 
@@ -127,7 +145,7 @@ app.post('/api/create-payment', async (req, res) => {
     request.requestBody({
         intent: 'CAPTURE',
         purchase_units: [{
-            amount: { currency_code: 'EUR', value: '5.00' },
+            amount: { currency_code: 'EUR', value: '5.00' }, // REMETTRE LE PRIX A 5.00
             description: `Abonnement Premium 1 mois pour ${req.session.user.username}`,
             custom_id: req.session.user.id
         }],
@@ -151,30 +169,23 @@ app.post('/api/create-payment', async (req, res) => {
 // PAIEMENT RÉUSSI (Page de retour pour l'utilisateur)
 app.get('/payment-success', async (req, res) => {
     if (!req.query.token) return res.redirect('/premium?message=error');
-
     const request = new paypalSDK.orders.OrdersCaptureRequest(req.query.token);
     request.requestBody({});
-
     try {
         const capture = await paypalClient.execute(request);
         const purchaseUnit = capture.result.purchase_units[0];
         const userId = purchaseUnit.payments.captures[0].custom_id;
-
         if (userId) {
-            // CORRIGÉ : Utilisation de la collection 'premiumsubscriptions'
             const premiumCollection = db.collection('premiumsubscriptions');
             const userDb = await premiumCollection.findOne({ userId });
-            
             const newExpiryDate = (userDb && userDb.vipExpires && new Date(userDb.vipExpires) > new Date())
                 ? new Date(new Date(userDb.vipExpires).getTime() + 30 * 24 * 60 * 60 * 1000)
                 : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
             await premiumCollection.updateOne(
                 { userId: userId },
                 { $set: { vipExpires: newExpiryDate }, $setOnInsert: { userId: userId } },
                 { upsert: true }
             );
-            
             console.log(`✅ [SUCCESS PAGE] VIP activé/prolongé pour l'utilisateur ${userId} jusqu'au ${newExpiryDate.toISOString()}`);
             res.redirect('/premium?message=success');
         } else {
