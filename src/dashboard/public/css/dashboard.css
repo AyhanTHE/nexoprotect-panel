@@ -1,0 +1,97 @@
+/* dashboard.css */
+
+:root {
+    --neon-blue: #00aaff;
+    --neon-glow: rgba(0, 170, 255, 0.5);
+    --card-bg: #1f1f3a;
+    --card-border: #2a2a4c;
+    --text-primary: #f0f0f0;
+    --text-secondary: #a0a0b0;
+}
+
+body {
+    background-color: #1a1a2e; /* Assure que le fond est le même que la page d'accueil */
+}
+
+.dashboard-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 2rem auto;
+    text-align: center;
+}
+
+.dashboard-container h1 {
+    color: var(--text-primary);
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-container p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 3rem;
+}
+
+#loading-message, .no-servers {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+}
+
+/* Grille pour les serveurs */
+.server-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Carte pour chaque serveur */
+.server-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-primary);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* L'effet néon au survol */
+.server-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow);
+    border-color: var(--neon-blue);
+}
+
+.server-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    background-color: #333; /* Fond pour les icônes qui ne chargent pas */
+}
+
+.server-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.manage-button {
+    background-color: var(--neon-blue);
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    margin-top: auto; /* Pousse le bouton en bas de la carte */
+}
+
+.server-card:hover .manage-button {
+    background-color: #00c3ff;
+}

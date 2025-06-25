@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoProtect - Tableau de Bord</title>
+    <!-- On charge le même style que l'accueil pour la navbar -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Et on charge un nouveau fichier CSS juste pour le dashboard -->
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="/images/NexoProtect-removebg-preview.png" alt="Logo NexoProtect">
+                <span class="logo-text">NexoProtect</span>
+            </a>
+            <nav>
+                <!-- On pourrait ajouter un bouton de déconnexion ici plus tard -->
+                <a href="/" class="nav-link">Retour à l'accueil</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <h1>Sélectionnez un serveur</h1>
+        <p>Voici les serveurs où vous avez les permissions d'administrateur.</p>
+
+        <!-- Ce conteneur va être rempli par notre JavaScript -->
+        <div id="server-list" class="server-grid">
+            <!-- Message de chargement -->
+            <div id="loading-message">Chargement de vos serveurs...</div>
+        </div>
+    </main>
+
+    <script>
+        // Ce script s'exécute côté client, dans le navigateur de l'utilisateur
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const serverListElement = document.getElementById('server-list');
+            const loadingMessage = document.getElementById('loading-message');
+
+            // On appelle notre propre API pour récupérer les serveurs
+            fetch('/api/guilds')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erreur HTTP: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(guilds => {
+                    loadingMessage.style.display = 'none'; // On cache le message de chargement
+
+                    if (guilds.length === 0) {
+                        serverListElement.innerHTML = '<p class="no-servers">Aucun serveur administrable trouvé.</p>';
+                        return;
+                    }
+
+                    // Pour chaque serveur, on crée une "carte"
+                    guilds.forEach(guild => {
+                        const iconUrl = guild.icon 
+                            ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
+                            : '/images/default-icon.png'; // Prévoir une icône par défaut
+
+                        const serverCard = document.createElement('a');
+                        serverCard.className = 'server-card';
+                        // Plus tard, ce lien mènera à la page de gestion de ce serveur
+                        serverCard.href = `/manage/${guild.id}`;
+
+                        serverCard.innerHTML = `
+                            <img src="${iconUrl}" alt="Icône du serveur" class="server-icon">
+                            <span class="server-name">${guild.name}</span>
+                            <span class="manage-button">Administrer</span>
+                        `;
+                        
+                        serverListElement.appendChild(serverCard);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des serveurs:', error);
+                    loadingMessage.innerHTML = 'Impossible de charger vos serveurs. Veuillez réessayer plus tard.';
+                    loadingMessage.style.color = '#ff6b6b';
+                });
+        });
+    </script>
+</body>
+</html>
