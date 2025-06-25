@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexoProtect - Tableau de Bord</title>
-    <!-- On ne charge plus que le CSS du dashboard qui a été mis à jour -->
     <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +14,6 @@
 
     <div class="dashboard-layout">
 
-        <!-- NOUVEAU : Menu latéral pour le profil -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="/" class="logo">
@@ -43,16 +41,24 @@
 
             <div class="sidebar-footer">
                 <% if (user) { %>
-                <button id="claim-vip-btn" class="btn-vip" <%= user.grade === 'VIP' ? 'disabled' : '' %>>
-                    <i class="fas fa-star"></i> 
-                    <span><%= user.grade === 'VIP' ? 'VIP Actif' : 'Réclamer VIP' %></span>
-                </button>
+                    <button id="claim-vip-btn" class="btn-vip" <%= user.grade === 'VIP' ? 'disabled' : '' %>>
+                        <i class="fas fa-star"></i> 
+                        <span><%= user.grade === 'VIP' ? 'VIP Actif' : 'Réclamer VIP' %></span>
+                    </button>
+            
+                    <a href="/premium" class="btn-premium">
+                        <i class="fas fa-gem"></i>
+                        <span>Devenir Premium</span>
+                    </a>
                 <% } %>
-                <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+            
+                <a href="/logout" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Déconnexion</span>
+                </a>
             </div>
         </aside>
 
-        <!-- Contenu principal pour les serveurs -->
         <main class="main-content">
             <header class="main-header">
                 <h1>Mes Serveurs</h1>

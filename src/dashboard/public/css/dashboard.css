@@ -1,5 +1,5 @@
 /* ================================== */
-/* NOUVEAU STYLE POUR LE DASHBOARD  */
+/* STYLE POUR LE DASHBOARD            */
 /* ================================== */
 
 /* --- Variables Globales --- */
@@ -278,4 +278,44 @@ body {
 }
 .btn-invite:hover {
     box-shadow: 0 0 20px rgba(88, 101, 242, 0.6);
+}
+
+/* ================================== */
+/* NOUVEAU STYLE POUR BOUTON PREMIUM  */
+/* ================================== */
+
+.btn-premium {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: var(--vip-gold);
+    color: #000; /* Texte noir pour un meilleur contraste sur fond jaune */
+    text-shadow: 0 0 2px rgba(0,0,0,0.2);
+}
+
+.btn-premium:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px var(--vip-glow); /* Effet néon au survol */
+}
+
+/* On ajoute un span aux boutons pour un alignement parfait */
+.btn-logout span, .btn-premium span, .btn-vip span {
+    flex-grow: 1;
+    text-align: center;
+}
+
+/* Ajustement pour que l'icône et le texte soient mieux répartis */
+.btn-logout, .btn-premium, .btn-vip {
+    justify-content: flex-start;
+    text-align: left;
+    gap: 1rem; /* Même espacement que les nav-items */
+    padding-left: 1rem;
 }
