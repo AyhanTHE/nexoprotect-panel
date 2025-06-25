@@ -1,8 +1,8 @@
 // =================================================================
 //        INDEX.JS COMPLET POUR LE PANEL WEB (AVEC EJS)
 // =================================================================
-// Version mise à jour pour gérer la sauvegarde des paramètres
-// de bienvenue / au revoir.
+// Version finale incluant la route pour la page de gestion
+// de serveur.
 // =================================================================
 
 // --- IMPORTS ---
@@ -127,9 +127,10 @@ app.get('/manage/:guildId', async (req, res) => {
 
         // 1. Récupérer les infos du serveur
         const guildResponse = await fetch(`${discordApi}/guilds/${req.params.guildId}`, { headers: botAuthHeader });
+        if (!guildResponse.ok) throw new Error('Impossible de récupérer les informations du serveur.');
         const guildData = await guildResponse.json();
-
-        // 2. Récupérer les salons textuels du serveur
+        
+        // 2. Récupérer les salons textuels
         const channelsResponse = await fetch(`${discordApi}/guilds/${req.params.guildId}/channels`, { headers: botAuthHeader });
         const channelsData = await channelsResponse.json();
         const textChannels = channelsData.filter(c => c.type === 0);
@@ -143,12 +144,13 @@ app.get('/manage/:guildId', async (req, res) => {
         // 4. Récupérer les paramètres actuels du serveur depuis notre DB
         const settingsCollection = db.collection('settings');
         const guildSettings = await settingsCollection.findOne({ guildId: req.params.guildId });
-
+        
+        // 5. On rend la nouvelle page 'manage-server.ejs' avec les données
         res.render('manage-server', {
-            user,
+            user: user,
             guild: guildData,
             channels: textChannels,
-            settings: guildSettings || {}
+            settings: guildSettings || {} // On envoie un objet vide si pas de settings
         });
 
     } catch (error) {
@@ -177,6 +179,7 @@ app.post('/api/settings/:guildId/welcome', async (req, res) => {
             'welcome.channelId': channelId,
             'welcome.message': message,
         };
+        // Seuls les VIP peuvent sauvegarder une bannière
         if (isVip) {
             updateData['welcome.bannerUrl'] = bannerUrl;
         }
