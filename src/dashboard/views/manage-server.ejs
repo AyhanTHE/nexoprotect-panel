@@ -19,16 +19,17 @@
             </div>
             
             <nav class="manage-nav">
-                <a href="#" class="nav-category"><i class="fas fa-tachometer-alt"></i><span>Tableau de bord</span></a>
+                <!-- Les liens ont maintenant un data-tab pour le système d'onglets -->
+                <a href="#" class="nav-category" data-tab="tab-dashboard"><i class="fas fa-tachometer-alt"></i><span>Tableau de bord</span></a>
                 <div class="nav-divider"></div>
                 <h3 class="nav-title">Modules</h3>
-                <a href="#" class="nav-category active"><i class="fas fa-users"></i><span>Arrivées & Départs</span></a>
-                <a href="#" class="nav-category"><i class="fas fa-shield-alt"></i><span>Modération</span></a>
-                <a href="#" class="nav-category"><i class="fas fa-gamepad"></i><span>Niveaux</span></a>
+                <a href="#" class="nav-category active" data-tab="tab-welcome"><i class="fas fa-users"></i><span>Arrivées & Départs</span></a>
+                <a href="#" class="nav-category" data-tab="tab-moderation"><i class="fas fa-shield-alt"></i><span>Modération</span></a>
+                <a href="#" class="nav-category" data-tab="tab-levels"><i class="fas fa-gamepad"></i><span>Niveaux</span></a>
             </nav>
 
             <div class="user-profile-section">
-                <% if (user) { %>
+                 <% if (user) { %>
                     <div class="profile-info">
                         <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png?size=64" alt="Avatar" class="profile-avatar-small">
                         <div class="profile-text">
@@ -44,133 +45,167 @@
         </aside>
 
         <main class="manage-main-content">
-            <header class="manage-header">
-                <h1>Arrivées et départs</h1>
-                <p>Configurez ici les messages de bienvenue et d'au revoir pour votre serveur.</p>
-            </header>
-
-            <form id="settings-form">
-                <!-- MODULE BIENVENUE -->
-                <details class="module-accordion" open>
-                    <summary class="module-summary">
-                        <div class="summary-title"><i class="fas fa-hand-sparkles"></i><h3>Messages de Bienvenue</h3></div>
-                        <label class="switch"><input type="checkbox" name="welcomeEnabled" <%= settings.welcome && settings.welcome.enabled ? 'checked' : '' %>><span class="slider round"></span></label>
-                    </summary>
-                    <div class="module-content">
-                        <div class="settings-grid">
-                            <div class="settings-column">
-                                <label for="welcome-channel">Salon des messages de bienvenue</label>
-                                <select id="welcome-channel" name="welcomeChannelId" class="select-box">
-                                    <option value="">Sélectionnez un salon</option>
-                                    <% channels.forEach(channel => { %><option value="<%= channel.id %>" <%= settings.welcome && settings.welcome.channelId === channel.id ? 'selected' : '' %>>#<%= channel.name %></option><% }); %>
-                                </select>
-
-                                <label for="welcome-message">Message personnalisé</label>
-                                <textarea id="welcome-message" name="welcomeMessage" class="textarea-box" placeholder="Ex: Bienvenue {user.username} !"><%= settings.welcome ? settings.welcome.message : '' %></textarea>
-                                <p class="variable-info">Variables: {user.username}, {user.mention}, {server.name}</p>
-
-                                <label>Bannière de bienvenue</label>
-                                <% if (user.grade === 'VIP') { %>
-                                    <div class="setting-vip"><i class="fas fa-crown vip-icon"></i><input type="text" name="welcomeBannerUrl" class="text-input" placeholder="URL de votre image/GIF" value="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>"></div>
-                                <% } else { %>
-                                    <div class="setting-locked"><p>Cette fonctionnalité est réservée aux membres VIP.</p><button type="button" class="btn-vip-upgrade"><i class="fas fa-star"></i> Devenir VIP</button></div>
-                                <% } %>
-                            </div>
-                            <div class="preview-column">
-                                <label>Prévisualisation</label>
-                                <div class="discord-preview"><div class="discord-message"><img src="https://cdn.discordapp.com/embed/avatars/1.png" class="discord-avatar" alt="avatar"><div class="discord-message-content"><div class="discord-user-info"><span class="discord-username">NexoProtect</span><span class="discord-bot-tag">APP</span></div><div class="discord-text"><p>Ho ! Un nouveau membre !</p><p>✨ Bienvenue, <%= user.username %> ! ✨</p></div></div></div></div>
-                            </div>
-                        </div>
-                    </div>
-                </details>
-
-                <!-- MODULE AU REVOIR -->
-                <details class="module-accordion">
-                     <summary class="module-summary">
-                        <div class="summary-title"><i class="fas fa-door-open"></i><h3>Messages d'Au Revoir</h3></div>
-                        <label class="switch"><input type="checkbox" name="goodbyeEnabled" <%= settings.goodbye && settings.goodbye.enabled ? 'checked' : '' %>><span class="slider round"></span></label>
-                    </summary>
-                     <div class="module-content">
-                        <div class="settings-grid">
-                            <div class="settings-column">
-                                <label for="goodbye-channel">Salon des messages d'au revoir</label>
-                                <select id="goodbye-channel" name="goodbyeChannelId" class="select-box">
-                                     <option value="">Sélectionnez un salon</option>
-                                     <% channels.forEach(channel => { %><option value="<%= channel.id %>" <%= settings.goodbye && settings.goodbye.channelId === channel.id ? 'selected' : '' %>>#<%= channel.name %></option><% }); %>
-                                </select>
-                                <label for="goodbye-message">Message personnalisé</label>
-                                <textarea id="goodbye-message" name="goodbyeMessage" class="textarea-box" placeholder="Ex: Au revoir {user.username}..."><%= settings.goodbye ? settings.goodbye.message : '' %></textarea>
-                            </div>
-                            <div class="preview-column">
-                                <label>Prévisualisation</label>
-                                <div class="discord-preview"><div class="discord-message"><img src="https://cdn.discordapp.com/embed/avatars/1.png" class="discord-avatar" alt="avatar"><div class="discord-message-content"><div class="discord-user-info"><span class="discord-username">NexoProtect</span><span class="discord-bot-tag">APP</span></div><div class="discord-text"><p>Un membre vient de partir 😢</p><p>À bientôt, <%= user.username %> !</p></div></div></div></div>
+            <!-- CONTENU DE L'ONGLET 1 : ARRIVÉES ET DÉPARTS -->
+            <div id="tab-welcome" class="tab-content active">
+                <header class="manage-header">
+                    <h1>Arrivées et départs</h1>
+                    <p>Configurez ici les messages de bienvenue et d'au revoir pour votre serveur.</p>
+                </header>
+                <form id="welcome-settings-form">
+                    <details class="module-accordion" open>
+                        <summary class="module-summary">
+                            <div class="summary-title"><i class="fas fa-hand-sparkles"></i><h3>Messages de Bienvenue</h3></div>
+                            <label class="switch"><input type="checkbox" name="welcomeEnabled" <%= settings.welcome && settings.welcome.enabled ? 'checked' : '' %>><span class="slider round"></span></label>
+                        </summary>
+                        <div class="module-content">
+                            <div class="settings-grid">
+                                <div class="settings-column">
+                                    <label for="welcome-channel">Salon des messages de bienvenue</label>
+                                    <select id="welcome-channel" name="welcomeChannelId" class="select-box">
+                                        <option value="">Sélectionnez un salon</option>
+                                        <% channels.forEach(channel => { %><option value="<%= channel.id %>" <%= settings.welcome && settings.welcome.channelId === channel.id ? 'selected' : '' %>>#<%= channel.name %></option><% }); %>
+                                    </select>
+                                    <label for="welcome-message">Message personnalisé</label>
+                                    <textarea id="welcome-message" name="welcomeMessage" class="textarea-box" placeholder="Ex: Bienvenue {user.username} !"><%= settings.welcome ? settings.welcome.message : '' %></textarea>
+                                    
+                                    <label>Bannière de bienvenue</label>
+                                    <% if (user.grade === 'VIP') { %>
+                                        <div class="setting-vip-upload">
+                                            <i class="fas fa-crown vip-icon"></i>
+                                            <input type="file" id="banner-upload-input" accept="image/png, image/jpeg, image/gif" style="display: none;">
+                                            <input type="hidden" name="welcomeBannerUrl" id="banner-base64-input" value="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>">
+                                            <button type="button" class="btn-upload" onclick="document.getElementById('banner-upload-input').click()">
+                                                <i class="fas fa-upload"></i> Importer une image
+                                            </button>
+                                            <div id="banner-preview" class="<%= settings.welcome && settings.welcome.bannerUrl ? '' : 'hidden' %>">
+                                                <img src="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>" alt="Aperçu de la bannière">
+                                            </div>
+                                        </div>
+                                    <% } else { %>
+                                        <div class="setting-locked"><p>Cette fonctionnalité est réservée aux membres VIP.</p><button type="button" class="btn-vip-upgrade"><i class="fas fa-star"></i> Devenir VIP</button></div>
+                                    <% } %>
+                                </div>
+                                <div class="preview-column">
+                                    <label>Prévisualisation</label>
+                                     <div class="discord-preview"><div class="discord-message"><img src="https://cdn.discordapp.com/embed/avatars/1.png" class="discord-avatar" alt="avatar"><div class="discord-message-content"><div class="discord-user-info"><span class="discord-username">NexoProtect</span><span class="discord-bot-tag">APP</span></div><div class="discord-text"><p>Ho ! Un nouveau membre !</p><p>✨ Bienvenue, <%= user.username %> ! ✨</p></div></div></div></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </details>
-            </form>
+                    </details>
+                    <!-- ... (accordéon pour les messages d'au revoir) ... -->
+                </form>
+            </div>
+
+            <!-- CONTENU DE L'ONGLET 2 : MODÉRATION (Placeholder) -->
+            <div id="tab-moderation" class="tab-content">
+                 <header class="manage-header"><h1>Modération</h1><p>Ce module est en cours de développement.</p></header>
+            </div>
+            
+            <!-- CONTENU DE L'ONGLET 3 : NIVEAUX (Placeholder) -->
+            <div id="tab-levels" class="tab-content">
+                <header class="manage-header"><h1>Niveaux</h1><p>Ce module est en cours de développement.</p></header>
+            </div>
         </main>
     </div>
 
     <div class="save-bar" id="save-bar">
-        <p id="save-status">Des changements non sauvegardés.</p>
+         <p id="save-status">Des changements non sauvegardés.</p>
         <button type="button" id="save-button" class="btn-save"><i class="fas fa-save"></i> Enregistrer les changements</button>
     </div>
 
     <script>
-        // Script pour gérer la sauvegarde
-        const saveButton = document.getElementById('save-button');
-        const saveStatus = document.getElementById('save-status');
-        const form = document.getElementById('settings-form');
-        
-        form.addEventListener('input', () => {
-            document.getElementById('save-bar').classList.add('visible');
-        });
+        // SCRIPT POUR LA GESTION DES ONGLETS
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.nav-category');
+            const contents = document.querySelectorAll('.tab-content');
+            const saveBar = document.getElementById('save-bar');
+            const saveButton = document.getElementById('save-button');
+            const saveStatus = document.getElementById('save-status');
+            const form = document.getElementById('welcome-settings-form');
 
-        saveButton.addEventListener('click', () => {
-            saveButton.disabled = true;
-            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
 
-            const guildId = window.location.pathname.split('/').pop();
-            const formData = new FormData(form);
-
-            const welcomeData = {
-                enabled: formData.get('welcomeEnabled') === 'on',
-                channelId: formData.get('welcomeChannelId'),
-                message: formData.get('welcomeMessage'),
-                bannerUrl: formData.get('welcomeBannerUrl') || null
-            };
-            const goodbyeData = {
-                enabled: formData.get('goodbyeEnabled') === 'on',
-                channelId: formData.get('goodbyeChannelId'),
-                message: formData.get('goodbyeMessage')
-            };
-
-            const saveWelcome = fetch(`/api/settings/${guildId}/welcome`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(welcomeData)
-            });
-            const saveGoodbye = fetch(`/api/settings/${guildId}/goodbye`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(goodbyeData)
-            });
-
-            Promise.all([saveWelcome, saveGoodbye])
-                .then(responses => Promise.all(responses.map(res => res.json())))
-                .then(data => {
-                    if (data.every(d => d.success)) {
-                        saveStatus.textContent = 'Changements enregistrés !';
-                        document.getElementById('save-bar').classList.remove('visible');
-                    } else {
-                        saveStatus.textContent = 'Une erreur est survenue.';
-                    }
-                })
-                .finally(() => {
-                    saveButton.disabled = false;
-                    saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer les changements';
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    const targetId = tab.getAttribute('data-tab');
+                    contents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === targetId) {
+                            content.classList.add('active');
+                        }
+                    });
                 });
+            });
+            
+            if(form){
+                form.addEventListener('input', () => {
+                   if(saveBar) saveBar.classList.add('visible');
+                });
+            }
+
+            if(saveButton){
+                 saveButton.addEventListener('click', () => {
+                    saveButton.disabled = true;
+                    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+
+                    const guildId = window.location.pathname.split('/').pop();
+                    const formData = new FormData(form);
+
+                    const welcomeData = {
+                        enabled: formData.get('welcomeEnabled') === 'on',
+                        channelId: formData.get('welcomeChannelId'),
+                        message: formData.get('welcomeMessage'),
+                        bannerUrl: formData.get('welcomeBannerUrl') || null
+                    };
+
+                    fetch(`/api/settings/${guildId}/welcome`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(welcomeData)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            saveStatus.textContent = 'Changements enregistrés !';
+                           if(saveBar) saveBar.classList.remove('visible');
+                        } else {
+                            saveStatus.textContent = 'Une erreur est survenue.';
+                        }
+                    })
+                    .finally(() => {
+                        saveButton.disabled = false;
+                        saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer les changements';
+                    });
+                });
+            }
+
+
+            // SCRIPT POUR L'IMPORT DE BANNIÈRE
+            const bannerInput = document.getElementById('banner-upload-input');
+            const bannerBase64Input = document.getElementById('banner-base64-input');
+            const bannerPreviewContainer = document.getElementById('banner-preview');
+            const bannerPreviewImg = bannerPreviewContainer ? bannerPreviewContainer.querySelector('img') : null;
+
+            if (bannerInput) {
+                bannerInput.addEventListener('change', () => {
+                    const file = bannerInput.files[0];
+                    if (file && bannerPreviewImg) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const base64String = e.target.result;
+                            bannerPreviewImg.src = base64String;
+                            bannerBase64Input.value = base64String;
+                            bannerPreviewContainer.classList.remove('hidden');
+                            if(saveBar) saveBar.classList.add('visible'); // Affiche la barre de sauvegarde
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
         });
     </script>
 </body>

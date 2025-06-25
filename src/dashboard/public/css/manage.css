@@ -28,7 +28,7 @@ body {
     display: flex;
 }
 
-/* --- Menu latéral (Sidebar) - VOTRE CODE --- */
+/* --- Menu latéral (Sidebar) --- */
 .manage-sidebar {
     width: 80px; /* Largeur quand il est fermé */
     height: 100vh;
@@ -88,6 +88,7 @@ body {
     font-weight: 500;
     transition: all 0.2s ease-in-out;
     white-space: nowrap;
+    cursor: pointer;
 }
 .nav-category i {
     width: 24px;
@@ -183,7 +184,7 @@ body {
     opacity: 1;
 }
 
-/* --- Contenu Principal - VOTRE CODE --- */
+/* --- Contenu Principal --- */
 .manage-main-content {
     margin-left: 80px; /* Largeur de la sidebar fermée */
     padding: 2rem 3rem;
@@ -205,7 +206,19 @@ body {
     margin-bottom: 2rem;
 }
 
-/* --- AJOUTS POUR LA NOUVELLE INTERFACE --- */
+/* --- Styles pour les onglets --- */
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 
 /* --- Accordéon pour les modules --- */
 .module-accordion {
@@ -284,6 +297,39 @@ body {
 .setting-vip { display: flex; align-items: center; gap: 0.5rem; }
 .vip-icon { color: var(--vip-gold); }
 
+/* --- Styles pour l'import d'image --- */
+.setting-vip-upload {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+.btn-upload {
+    background-color: var(--primary-accent);
+    color: #fff;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-upload:hover {
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+#banner-preview {
+    margin-top: 1rem;
+}
+#banner-preview img {
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+#banner-preview.hidden {
+    display: none;
+}
+
+/* --- Prévisualisation --- */
 .discord-preview { background-color: #2f3136; border-radius: 8px; padding: 1rem; }
 .discord-message { display: flex; gap: 1rem; }
 .discord-avatar { width: 40px; height: 40px; border-radius: 50%; }
@@ -306,6 +352,7 @@ body {
     gap: 1.5rem;
     border-top: 1px solid var(--border-color);
     transition: bottom 0.5s ease-in-out, left 0.3s ease-in-out;
+    z-index: 99;
 }
 .save-bar.visible { bottom: 0; }
 .manage-sidebar:hover ~ .save-bar { left: 280px; }
@@ -326,7 +373,7 @@ body {
 .btn-save:hover { background-color: #27ae60; }
 .btn-save:disabled { background-color: #555; cursor: not-allowed; }
 
-/* --- Interrupteur (Switch) - VOTRE CODE --- */
+/* --- Interrupteur (Switch) --- */
 .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b4f5c; transition: .4s; }
