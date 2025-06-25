@@ -8,7 +8,6 @@ const path = require('path');
 const fetch = require('node-fetch');
 const { MongoClient } = require('mongodb');
 const session = require('express-session');
-// MODIFICATION MAJEURE : On "déstructure" l'importation de PayPal
 const paypalSDK = require('@paypal/checkout-server-sdk');
 require('dotenv').config();
 
@@ -60,9 +59,22 @@ app.get('/manage/:guildId', async (req, res) => { if (!req.session.user) return 
 // ===============================================
 
 // AFFICHER LA PAGE PREMIUM
-app.get('/premium', (req, res) => {
+app.get('/premium', async (req, res) => { // <-- Ajout de async
     if (!req.session.user) return res.redirect('/');
-    res.render('premium', { user: req.session.user, message: req.query.message || null });
+    try {
+        const usersCollection = db.collection('users');
+        const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
+        const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
+        
+        // On crée l'objet user complet, avec le grade, avant de rendre la page
+        const user = { ...req.session.user, grade };
+
+        res.render('premium', { user: user, message: req.query.message || null });
+    } catch (error) {
+        console.error("Erreur lors du chargement de la page premium:", error);
+        // En cas d'erreur, on affiche la page avec l'utilisateur de base pour éviter un crash
+        res.render('premium', { user: req.session.user, message: req.query.message || null });
+    }
 });
 
 // CRÉER LA COMMANDE PAYPAL
