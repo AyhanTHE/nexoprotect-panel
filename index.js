@@ -1,8 +1,8 @@
 // =================================================================
-//        INDEX.JS COMPLET POUR LE PANEL WEB (RENDER.COM)
+//        INDEX.JS COMPLET POUR LE PANEL WEB (AVEC EJS)
 // =================================================================
-// Version mise à jour pour inclure la gestion du profil utilisateur
-// et un système de statut VIP.
+// Version mise à jour pour utiliser EJS comme moteur de modèles.
+// Le serveur prépare les données AVANT d'envoyer la page.
 // =================================================================
 
 // --- IMPORTS ---
@@ -11,12 +11,18 @@ const path = require('path');
 const fetch = require('node-fetch');
 const { MongoClient } = require('mongodb');
 const session = require('express-session');
+const ejs = require('ejs'); // On importe EJS
 require('dotenv').config();
 
 // --- INITIALISATION ---
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
+
+// --- CONFIGURATION EJS ---
+app.set('view engine', 'ejs');
+// On indique à Express où trouver les fichiers de vue (.ejs)
+app.set('views', path.join(__dirname, 'src', 'dashboard', 'views'));
 
 // --- MIDDLEWARES ---
 app.use(express.static(path.join(__dirname, 'src', 'dashboard', 'public')));
@@ -30,8 +36,9 @@ app.use(session({
 }));
 
 // --- CONNEXION À LA BASE DE DONNÉES ---
-const mongoClient = new MongoClient(process.env.DATABASE_URL);
+// (Code inchangé)
 let db;
+const mongoClient = new MongoClient(process.env.DATABASE_URL);
 mongoClient.connect()
     .then(() => {
         console.log('✅ Panel web connecté à la base de données MongoDB !');
@@ -39,14 +46,17 @@ mongoClient.connect()
     })
     .catch(err => console.error("❌ Erreur de connexion à MongoDB:", err));
 
+
 // --- ROUTES DE L'APPLICATION ---
 
 // Page d'accueil
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'src', 'dashboard', 'views', 'index.html')));
+app.get('/', (req, res) => {
+    // On utilise res.render() pour afficher la vue 'index.ejs'
+    res.render('index');
+});
 
-// Callback Discord
+// Callback Discord (code inchangé)
 app.get('/callback', async (req, res) => {
-    // ... (code de la route callback inchangé)
     const code = req.query.code;
     if (!code) return res.status(400).send('Erreur: "code" manquant.');
     try {
@@ -78,97 +88,72 @@ app.get('/callback', async (req, res) => {
     }
 });
 
-// Page du tableau de bord
-app.get('/dashboard', (req, res) => {
-    if (!req.session.user) return res.redirect('/');
-    res.sendFile(path.join(__dirname, 'src', 'dashboard', 'views', 'dashboard.html'));
-});
-
-// Déconnexion
+// Déconnexion (code inchangé)
 app.get('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/'));
 });
 
-
-// --- NOUVELLES ROUTES API ---
-
-// API pour les informations de l'utilisateur (avec statut VIP)
-app.get('/api/user', async (req, res) => {
+// Route du Tableau de Bord (LOGIQUE PRINCIPALE)
+app.get('/dashboard', async (req, res) => {
     if (!req.session.user) {
-        return res.status(401).json({ error: 'Non authentifié' });
+        return res.redirect('/');
     }
-    
+
     try {
+        // --- On prépare TOUTES les données ici ---
+        
+        // 1. Récupérer les infos de l'utilisateur et son statut VIP
         const usersCollection = db.collection('users');
         const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
-
         let grade = "Utilisateur";
         if (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) {
             grade = "VIP";
         }
-        
-        res.json({
-            ...req.session.user,
-            grade: grade,
-            vipExpires: userDbInfo ? userDbInfo.vipExpires : null
-        });
+        const user = { ...req.session.user, grade };
 
-    } catch (error) {
-        res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
-
-// API pour réclamer le statut VIP
-app.post('/api/claim-vip', async (req, res) => {
-    if (!req.session.user) {
-        return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    try {
-        const usersCollection = db.collection('users');
-        const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
-
-        // On vérifie si l'utilisateur n'est pas déjà VIP pour éviter les abus
-        if (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) {
-            return res.status(400).json({ message: 'Vous êtes déjà VIP.' });
-        }
-
-        const expirationDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // VIP pour 24 heures
-
-        await usersCollection.updateOne(
-            { userId: req.session.user.id },
-            { $set: { vipExpires: expirationDate } },
-            { upsert: true } // Crée le document s'il n'existe pas
-        );
-
-        res.json({ success: true, vipExpires: expirationDate });
-
-    } catch (error) {
-        res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
-
-
-// API pour la liste des serveurs (code inchangé)
-app.get('/api/guilds', async (req, res) => {
-    // ... Le code de cette route reste le même
-    if (!req.session.accessToken) return res.status(401).json({ error: 'Non authentifié' });
-    if (!db) return res.status(503).json({ error: 'Service momentanément indisponible' });
-    try {
+        // 2. Récupérer les serveurs de l'utilisateur (comme avant)
         const guildsResponse = await fetch('https://discord.com/api/users/@me/guilds', {
             headers: { authorization: `Bearer ${req.session.accessToken}` },
         });
         const userGuilds = await guildsResponse.json();
-        if (!Array.isArray(userGuilds)) throw new Error('Réponse invalide');
         const adminGuilds = userGuilds.filter(g => (BigInt(g.permissions) & 8n) === 8n);
+
+        // 3. Récupérer les serveurs du bot (comme avant)
         const botGuildsCollection = db.collection('botGuilds');
         const botGuilds = await botGuildsCollection.find({}, { projection: { guildId: 1 } }).toArray();
         const botGuildIds = new Set(botGuilds.map(g => g.guildId));
-        const result = adminGuilds.map(guild => ({...guild, botOnServer: botGuildIds.has(guild.id)}));
-        res.json(result);
+
+        // 4. Combiner les informations
+        const guilds = adminGuilds.map(guild => ({...guild, botOnServer: botGuildIds.has(guild.id)}));
+
+        // 5. Rendre la page EJS en lui passant toutes les données
+        res.render('dashboard', {
+            user: user,       // On passe les infos de l'utilisateur
+            guilds: guilds    // On passe la liste des serveurs
+        });
+
     } catch (error) {
-        console.error("Erreur dans /api/guilds:", error);
-        res.status(500).json({ error: 'Erreur interne du serveur' });
+        console.error("Erreur lors de la préparation du dashboard:", error);
+        res.status(500).send("Erreur lors du chargement du tableau de bord.");
+    }
+});
+
+
+// API pour réclamer le statut VIP (route POST, reste inchangée)
+app.post('/api/claim-vip', async (req, res) => {
+    // ... code de cette route inchangé ...
+    if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
+    try {
+        const usersCollection = db.collection('users');
+        const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
+        if (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) {
+            return res.status(400).json({ message: 'Vous êtes déjà VIP.' });
+        }
+        const expirationDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await usersCollection.updateOne({ userId: req.session.user.id }, { $set: { vipExpires: expirationDate } }, { upsert: true });
+        res.json({ success: true, vipExpires: expirationDate });
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 

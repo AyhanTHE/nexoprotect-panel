@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoProtect - Tableau de Bord</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/profile.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="logo">
+                <img src="/images/NexoProtect-removebg-preview.png" alt="Logo NexoProtect">
+                <span class="logo-text">NexoProtect</span>
+            </a>
+            
+            <!-- Affichage du profil utilisateur avec les données EJS -->
+            <div id="user-profile-container">
+                <% if (user) { %>
+                    <div class="profile-info">
+                        <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png" alt="Avatar" class="profile-avatar">
+                        <div>
+                            <span class="profile-name"><%= user.username %></span>
+                            <span class="profile-grade <%= user.grade === 'VIP' ? 'vip-status' : '' %>">
+                                Grade : <%= user.grade %>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        <button id="claim-vip-btn" class="btn-vip" <%= user.grade === 'VIP' ? 'disabled' : '' %>>
+                            <i class="fas fa-star"></i> Récupérer le VIP 1 jour
+                        </button>
+                        <a href="/logout" class="btn-logout">
+                            <i class="fas fa-sign-out-alt"></i> Déconnexion
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <h1>Sélectionnez un serveur</h1>
+        <p>Voici les serveurs où vous disposez des permissions d'administrateur.</p>
+
+        <div class="server-grid">
+            <!-- Boucle sur la liste des serveurs avec EJS -->
+            <% if (guilds.length === 0) { %>
+                <p class="no-servers">Aucun serveur administrable trouvé.</p>
+            <% } else { %>
+                <% guilds.forEach(guild => { %>
+                    <div class="server-card">
+                        <% const iconUrl = guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : '/images/default-icon.png'; %>
+                        <img src="<%= iconUrl %>" alt="Icône du serveur" class="server-icon" onerror="this.src='/images/default-icon.png'">
+                        <span class="server-name"><%= guild.name %></span>
+                        <div class="card-footer">
+                            <% if (guild.botOnServer) { %>
+                                <a href="/manage/<%= guild.id %>" class="btn-manage"><i class="fas fa-cogs"></i> Gérer le serveur</a>
+                            <% } else { %>
+                                <a href="https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&guild_id=<%= guild.id %>&permissions=8&scope=bot%20applications.commands" target="_blank" class="btn-invite"><i class="fab fa-discord"></i> Inviter sur le Serveur</a>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } %>
+        </div>
+    </main>
+    
+    <!-- Script pour la partie interactive (bouton VIP) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const claimVipBtn = document.getElementById('claim-vip-btn');
+            if (claimVipBtn) {
+                claimVipBtn.addEventListener('click', () => {
+                    claimVipBtn.disabled = true;
+                    claimVipBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Activation...';
+                    fetch('/api/claim-vip', { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.success) {
+                                // Si succès, on recharge simplement la page pour voir les changements
+                                window.location.reload();
+                            } else {
+                                claimVipBtn.innerHTML = data.message || 'Erreur';
+                            }
+                        });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
