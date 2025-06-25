@@ -1,0 +1,95 @@
+:root {
+    --vip-yellow: #FFD700;
+    --vip-glow: rgba(255, 215, 0, 0.7);
+    --logout-red: #f04747;
+    --logout-glow: rgba(240, 71, 71, 0.6);
+}
+
+.navbar-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#user-profile-container {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--neon-blue);
+}
+
+.profile-info > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.profile-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.profile-grade {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.profile-grade.vip-status {
+    color: var(--vip-yellow);
+    font-weight: bold;
+    text-shadow: 0 0 8px var(--vip-glow);
+}
+
+.profile-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-vip, .btn-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.btn-vip {
+    background-color: var(--vip-yellow);
+}
+
+.btn-vip:hover:not(:disabled) {
+    box-shadow: 0 0 15px var(--vip-glow), 0 0 30px var(--vip-glow);
+}
+
+.btn-vip:disabled {
+    background-color: #a98f00;
+    cursor: not-allowed;
+}
+
+.btn-logout {
+    background-color: var(--logout-red);
+}
+
+.btn-logout:hover {
+    box-shadow: 0 0 15px var(--logout-glow);
+}

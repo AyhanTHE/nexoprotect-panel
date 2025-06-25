@@ -1,8 +1,8 @@
 // =================================================================
 //        INDEX.JS COMPLET POUR LE PANEL WEB (RENDER.COM)
 // =================================================================
-// Version mise à jour pour gérer l'affichage conditionnel des
-// boutons "Inviter" / "Gérer" dans le tableau de bord.
+// Version mise à jour pour inclure la gestion du profil utilisateur
+// et un système de statut VIP.
 // =================================================================
 
 // --- IMPORTS ---
@@ -16,33 +16,18 @@ require('dotenv').config();
 // --- INITIALISATION ---
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// --- CONFIGURATION CRUCIALE POUR RENDER.COM ---
-// Cette ligne est ESSENTIELLE pour que les sessions fonctionnent derrière un proxy.
 app.set('trust proxy', 1);
 
-
 // --- MIDDLEWARES ---
-// Sert les fichiers statiques (CSS, JS client, images) depuis le dossier 'public'
 app.use(express.static(path.join(__dirname, 'src', 'dashboard', 'public')));
-// Permet à Express de comprendre les données envoyées en JSON
 app.use(express.json());
-// Permet à Express de comprendre les données des formulaires
 app.use(express.urlencoded({ extended: true }));
-// Middleware pour gérer les sessions utilisateur
 app.use(session({
-    // Ce secret sert à sécuriser les cookies de session.
-    // Pour une meilleure sécurité, placez-le dans vos variables d'environnement.
     secret: process.env.SESSION_SECRET || 'une-super-phrase-secrete-pour-nexoprotect',
     resave: false,
     saveUninitialized: false,
-    cookie: {
-        secure: true, // Doit être 'true' car Render est en HTTPS
-        httpOnly: true, // Empêche l'accès au cookie via JavaScript côté client
-        maxAge: 1000 * 60 * 60 * 24 // Durée de vie du cookie de session (ici, 1 jour)
-    }
+    cookie: { secure: true, httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }
 }));
-
 
 // --- CONNEXION À LA BASE DE DONNÉES ---
 const mongoClient = new MongoClient(process.env.DATABASE_URL);
@@ -52,24 +37,18 @@ mongoClient.connect()
         console.log('✅ Panel web connecté à la base de données MongoDB !');
         db = mongoClient.db('nexoprotect_db');
     })
-    .catch(err => {
-        console.error("❌ Erreur de connexion à MongoDB pour le panel:", err);
-        process.exit(1);
-    });
-
+    .catch(err => console.error("❌ Erreur de connexion à MongoDB:", err));
 
 // --- ROUTES DE L'APPLICATION ---
 
-// Route principale : affiche la page d'accueil
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'dashboard', 'views', 'index.html'));
-});
+// Page d'accueil
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'src', 'dashboard', 'views', 'index.html')));
 
-// Route de Callback : gère le retour de l'authentification Discord
+// Callback Discord
 app.get('/callback', async (req, res) => {
+    // ... (code de la route callback inchangé)
     const code = req.query.code;
     if (!code) return res.status(400).send('Erreur: "code" manquant.');
-
     try {
         const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
             method: 'POST',
@@ -77,7 +56,7 @@ app.get('/callback', async (req, res) => {
                 client_id: process.env.CLIENT_ID,
                 client_secret: process.env.CLIENT_SECRET,
                 grant_type: 'authorization_code',
-                code: code,
+                code,
                 redirect_uri: process.env.REDIRECT_URI,
             }),
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -92,73 +71,101 @@ app.get('/callback', async (req, res) => {
 
         req.session.accessToken = tokenData.access_token;
         req.session.user = userData;
-        
-        console.log(`[CALLBACK] Session sauvegardée pour: ${req.session.user.username}`);
-
-        req.session.save(() => {
-            res.redirect('/dashboard');
-        });
-
+        req.session.save(() => res.redirect('/dashboard'));
     } catch (error) {
         console.error("Erreur critique dans /callback:", error);
         res.status(500).send('Une erreur interne est survenue.');
     }
 });
 
-// Route du Tableau de Bord (page)
+// Page du tableau de bord
 app.get('/dashboard', (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/');
-    }
+    if (!req.session.user) return res.redirect('/');
     res.sendFile(path.join(__dirname, 'src', 'dashboard', 'views', 'dashboard.html'));
 });
 
-// Route de Déconnexion
+// Déconnexion
 app.get('/logout', (req, res) => {
-    req.session.destroy(err => {
-        if (err) {
-            return res.redirect('/dashboard');
-        }
-        res.clearCookie('connect.sid');
-        res.redirect('/');
-    });
+    req.session.destroy(() => res.redirect('/'));
 });
 
 
-// API pour obtenir la liste des serveurs de l'utilisateur
-app.get('/api/guilds', async (req, res) => {
-    if (!req.session.accessToken) {
+// --- NOUVELLES ROUTES API ---
+
+// API pour les informations de l'utilisateur (avec statut VIP)
+app.get('/api/user', async (req, res) => {
+    if (!req.session.user) {
         return res.status(401).json({ error: 'Non authentifié' });
     }
-    if (!db) {
-        return res.status(503).json({ error: 'Service momentanément indisponible' });
+    
+    try {
+        const usersCollection = db.collection('users');
+        const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
+
+        let grade = "Utilisateur";
+        if (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) {
+            grade = "VIP";
+        }
+        
+        res.json({
+            ...req.session.user,
+            grade: grade,
+            vipExpires: userDbInfo ? userDbInfo.vipExpires : null
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// API pour réclamer le statut VIP
+app.post('/api/claim-vip', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Non authentifié' });
     }
 
     try {
-        // 1. Récupérer les serveurs où l'utilisateur est admin via l'API Discord
+        const usersCollection = db.collection('users');
+        const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
+
+        // On vérifie si l'utilisateur n'est pas déjà VIP pour éviter les abus
+        if (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) {
+            return res.status(400).json({ message: 'Vous êtes déjà VIP.' });
+        }
+
+        const expirationDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // VIP pour 24 heures
+
+        await usersCollection.updateOne(
+            { userId: req.session.user.id },
+            { $set: { vipExpires: expirationDate } },
+            { upsert: true } // Crée le document s'il n'existe pas
+        );
+
+        res.json({ success: true, vipExpires: expirationDate });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+
+// API pour la liste des serveurs (code inchangé)
+app.get('/api/guilds', async (req, res) => {
+    // ... Le code de cette route reste le même
+    if (!req.session.accessToken) return res.status(401).json({ error: 'Non authentifié' });
+    if (!db) return res.status(503).json({ error: 'Service momentanément indisponible' });
+    try {
         const guildsResponse = await fetch('https://discord.com/api/users/@me/guilds', {
             headers: { authorization: `Bearer ${req.session.accessToken}` },
         });
         const userGuilds = await guildsResponse.json();
-        if (!Array.isArray(userGuilds)) throw new Error('Réponse invalide de l\'API Discord');
-        
-        const adminGuilds = userGuilds.filter(guild => (BigInt(guild.permissions) & 8n) === 8n);
-
-        // 2. Récupérer la liste des serveurs où le BOT est présent depuis la base de données
-        // IMPORTANT : Votre bot doit écrire dans cette collection quand il rejoint/quitte un serveur !
+        if (!Array.isArray(userGuilds)) throw new Error('Réponse invalide');
+        const adminGuilds = userGuilds.filter(g => (BigInt(g.permissions) & 8n) === 8n);
         const botGuildsCollection = db.collection('botGuilds');
-        const botGuildsCursor = botGuildsCollection.find({}, { projection: { guildId: 1 } });
-        const botGuilds = await botGuildsCursor.toArray();
+        const botGuilds = await botGuildsCollection.find({}, { projection: { guildId: 1 } }).toArray();
         const botGuildIds = new Set(botGuilds.map(g => g.guildId));
-
-        // 3. Comparer les deux listes et ajouter un indicateur `botOnServer`
-        const result = adminGuilds.map(guild => ({
-            ...guild,
-            botOnServer: botGuildIds.has(guild.id)
-        }));
-
+        const result = adminGuilds.map(guild => ({...guild, botOnServer: botGuildIds.has(guild.id)}));
         res.json(result);
-
     } catch (error) {
         console.error("Erreur dans /api/guilds:", error);
         res.status(500).json({ error: 'Erreur interne du serveur' });

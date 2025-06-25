@@ -4,26 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexoProtect - Tableau de Bord</title>
-    <!-- On charge les fichiers CSS. Assurez-vous qu'ils existent aux bons emplacements. -->
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/dashboard.css">
+    <!-- NOUVEAU : On charge le CSS pour le profil -->
+    <link rel="stylesheet" href="/css/profile.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- On charge Font Awesome pour les icônes (engrenage, logo Discord) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 </head>
 <body>
 
     <header class="navbar">
-        <div class="container">
+        <div class="container navbar-content">
             <a href="/" class="logo">
                 <img src="/images/NexoProtect-removebg-preview.png" alt="Logo NexoProtect">
                 <span class="logo-text">NexoProtect</span>
             </a>
-            <nav>
-                <a href="/logout" class="nav-link">Déconnexion</a>
-            </nav>
+            <!-- NOUVEAU : Conteneur pour le profil utilisateur -->
+            <div id="user-profile-container">
+                <!-- Ce contenu sera généré par le script -->
+            </div>
         </div>
     </header>
 
@@ -31,83 +32,96 @@
         <h1>Sélectionnez un serveur</h1>
         <p>Voici les serveurs où vous disposez des permissions d'administrateur.</p>
 
-        <!-- Ce conteneur sera rempli dynamiquement par le script ci-dessous -->
         <div id="server-list" class="server-grid">
             <div id="loading-message">Chargement de vos serveurs...</div>
         </div>
     </main>
 
     <script>
-        // Ce script s'exécute dans le navigateur de l'utilisateur
         document.addEventListener('DOMContentLoaded', () => {
+            loadUserProfile();
+            loadGuilds();
+        });
+
+        function loadUserProfile() {
+            const profileContainer = document.getElementById('user-profile-container');
+            fetch('/api/user')
+                .then(res => res.json())
+                .then(user => {
+                    if (user.error) return;
+
+                    const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+                    const isVip = user.grade === 'VIP';
+                    
+                    profileContainer.innerHTML = `
+                        <div class="profile-info">
+                            <img src="${avatarUrl}" alt="Avatar" class="profile-avatar">
+                            <div>
+                                <span class="profile-name">${user.username}</span>
+                                <span class="profile-grade ${isVip ? 'vip-status' : ''}">Grade : ${user.grade}</span>
+                            </div>
+                        </div>
+                        <div class="profile-actions">
+                            <button id="claim-vip-btn" class="btn-vip" ${isVip ? 'disabled' : ''}>
+                                <i class="fas fa-star"></i> Récupérer le VIP 1 jour
+                            </button>
+                            <a href="/logout" class="btn-logout">
+                                <i class="fas fa-sign-out-alt"></i> Déconnexion
+                            </a>
+                        </div>
+                    `;
+
+                    // On ajoute l'écouteur d'événement APRES avoir créé le bouton
+                    const claimVipBtn = document.getElementById('claim-vip-btn');
+                    if (claimVipBtn) {
+                        claimVipBtn.addEventListener('click', () => {
+                            claimVipBtn.disabled = true;
+                            claimVipBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Activation...';
+                            fetch('/api/claim-vip', { method: 'POST' })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if(data.success) {
+                                        // On recharge le profil pour afficher le nouveau statut
+                                        loadUserProfile();
+                                    } else {
+                                        claimVipBtn.innerHTML = data.message || 'Erreur';
+                                    }
+                                });
+                        });
+                    }
+                });
+        }
+
+        function loadGuilds() {
+            // ... (la fonction pour charger les serveurs reste la même)
             const serverListElement = document.getElementById('server-list');
             const loadingMessage = document.getElementById('loading-message');
-
-            // On appelle l'API de notre serveur pour récupérer la liste des serveurs
             fetch('/api/guilds')
-                .then(response => {
-                    if (!response.ok) {
-                        // Si le serveur répond avec une erreur (ex: 401, 500)
-                        throw new Error(`Erreur HTTP: ${response.status}`);
-                    }
-                    return response.json();
-                })
+                .then(res => res.json())
                 .then(guilds => {
-                    // Une fois les données reçues, on cache le message de chargement
                     loadingMessage.style.display = 'none';
-
                     if (guilds.length === 0) {
                         serverListElement.innerHTML = '<p class="no-servers">Aucun serveur administrable trouvé.</p>';
                         return;
                     }
-
-                    // On boucle sur chaque serveur reçu pour créer une carte
                     guilds.forEach(guild => {
-                        // On construit l'URL de l'icône du serveur
-                        const iconUrl = guild.icon
-                            ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
-                            : '/images/default-icon.png'; // Prévoir une icône par défaut
-                        
+                        const iconUrl = guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : '/images/default-icon.png';
                         const serverCard = document.createElement('div');
                         serverCard.className = 'server-card';
-
-                        let buttonHtml = '';
-                        // Logique pour afficher le bon bouton
-                        if (guild.botOnServer) {
-                            // Le bot est sur le serveur : bouton "Gérer"
-                            buttonHtml = `
-                                <a href="/manage/${guild.id}" class="btn-manage">
-                                    <i class="fas fa-cogs"></i> Gérer le serveur
-                                </a>`;
-                        } else {
-                            // Le bot n'est PAS sur le serveur : bouton "Inviter"
-                            // On construit un lien d'invitation qui présélectionne le serveur
-                            const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&guild_id=${guild.id}&permissions=8&scope=bot%20applications.commands`;
-                            buttonHtml = `
-                                <a href="${inviteUrl}" target="_blank" class="btn-invite">
-                                    <i class="fab fa-discord"></i> Inviter sur le Serveur
-                                </a>`;
-                        }
-
-                        // On construit le HTML complet de la carte du serveur
+                        let buttonHtml = guild.botOnServer
+                            ? `<a href="/manage/${guild.id}" class="btn-manage"><i class="fas fa-cogs"></i> Gérer le serveur</a>`
+                            : `<a href="https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&guild_id=${guild.id}&permissions=8&scope=bot%20applications.commands" target="_blank" class="btn-invite"><i class="fab fa-discord"></i> Inviter sur le Serveur</a>`;
+                        
                         serverCard.innerHTML = `
                             <img src="${iconUrl}" alt="Icône du serveur" class="server-icon" onerror="this.src='/images/default-icon.png'">
                             <span class="server-name">${guild.name}</span>
-                            <div class="card-footer">
-                                ${buttonHtml}
-                            </div>
+                            <div class="card-footer">${buttonHtml}</div>
                         `;
-                        // On ajoute la carte à la grille
                         serverListElement.appendChild(serverCard);
                     });
-                })
-                .catch(error => {
-                    // En cas d'erreur de communication avec notre API
-                    console.error('Erreur lors de la récupération des serveurs:', error);
-                    loadingMessage.innerHTML = 'Impossible de charger vos serveurs. Veuillez réessayer plus tard.';
-                    loadingMessage.style.color = '#ff6b6b';
                 });
-        });
+        }
+
     </script>
 </body>
 </html>
