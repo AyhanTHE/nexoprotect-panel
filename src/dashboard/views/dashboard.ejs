@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexoProtect - Tableau de Bord</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <!-- On ne charge plus que le CSS du dashboard qui a été mis à jour -->
     <link rel="stylesheet" href="/css/dashboard.css">
-    <link rel="stylesheet" href="/css/profile.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -14,68 +13,80 @@
 </head>
 <body>
 
-    <header class="navbar">
-        <div class="container navbar-content">
-            <a href="/" class="logo">
-                <img src="/images/NexoProtect-removebg-preview.png" alt="Logo NexoProtect">
-                <span class="logo-text">NexoProtect</span>
-            </a>
-            
-            <!-- Affichage du profil utilisateur avec les données EJS -->
-            <div id="user-profile-container">
-                <% if (user) { %>
-                    <div class="profile-info">
-                        <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png" alt="Avatar" class="profile-avatar">
-                        <div>
-                            <span class="profile-name"><%= user.username %></span>
-                            <span class="profile-grade <%= user.grade === 'VIP' ? 'vip-status' : '' %>">
-                                Grade : <%= user.grade %>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="profile-actions">
-                        <button id="claim-vip-btn" class="btn-vip" <%= user.grade === 'VIP' ? 'disabled' : '' %>>
-                            <i class="fas fa-star"></i> Récupérer le VIP 1 jour
-                        </button>
-                        <a href="/logout" class="btn-logout">
-                            <i class="fas fa-sign-out-alt"></i> Déconnexion
-                        </a>
-                    </div>
-                <% } %>
+    <div class="dashboard-layout">
+
+        <!-- NOUVEAU : Menu latéral pour le profil -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/" class="logo">
+                    <img src="/images/NexoProtect-removebg-preview.png" alt="Logo NexoProtect">
+                    <span>NexoProtect</span>
+                </a>
             </div>
 
-        </div>
-    </header>
-
-    <main class="dashboard-container">
-        <h1>Sélectionnez un serveur</h1>
-        <p>Voici les serveurs où vous disposez des permissions d'administrateur.</p>
-
-        <div class="server-grid">
-            <!-- Boucle sur la liste des serveurs avec EJS -->
-            <% if (guilds.length === 0) { %>
-                <p class="no-servers">Aucun serveur administrable trouvé.</p>
-            <% } else { %>
-                <% guilds.forEach(guild => { %>
-                    <div class="server-card">
-                        <% const iconUrl = guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : '/images/default-icon.png'; %>
-                        <img src="<%= iconUrl %>" alt="Icône du serveur" class="server-icon" onerror="this.src='/images/default-icon.png'">
-                        <span class="server-name"><%= guild.name %></span>
-                        <div class="card-footer">
-                            <% if (guild.botOnServer) { %>
-                                <a href="/manage/<%= guild.id %>" class="btn-manage"><i class="fas fa-cogs"></i> Gérer le serveur</a>
-                            <% } else { %>
-                                <a href="https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&guild_id=<%= guild.id %>&permissions=8&scope=bot%20applications.commands" target="_blank" class="btn-invite"><i class="fab fa-discord"></i> Inviter sur le Serveur</a>
-                            <% } %>
-                        </div>
-                    </div>
-                <% }); %>
+            <% if (user) { %>
+            <div class="profile-card">
+                <div class="profile-banner"></div>
+                <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png?size=128" alt="Avatar" class="profile-avatar">
+                <h2 class="profile-name"><%= user.username %></h2>
+                <div class="profile-grade <%= user.grade === 'VIP' ? 'vip' : '' %>">
+                    <i class="fas <%= user.grade === 'VIP' ? 'fa-crown' : 'fa-user' %>"></i>
+                    <span><%= user.grade %></span>
+                </div>
+            </div>
             <% } %>
-        </div>
-    </main>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="nav-item active"><i class="fas fa-server"></i> Serveurs</a>
+                <a href="#" class="nav-item"><i class="fas fa-cog"></i> Paramètres</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <% if (user) { %>
+                <button id="claim-vip-btn" class="btn-vip" <%= user.grade === 'VIP' ? 'disabled' : '' %>>
+                    <i class="fas fa-star"></i> 
+                    <span><%= user.grade === 'VIP' ? 'VIP Actif' : 'Réclamer VIP' %></span>
+                </button>
+                <% } %>
+                <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+            </div>
+        </aside>
+
+        <!-- Contenu principal pour les serveurs -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Mes Serveurs</h1>
+                <p>Sélectionnez un serveur pour commencer à le configurer.</p>
+            </header>
+            
+            <div class="server-grid">
+                <% if (guilds.length === 0) { %>
+                    <p class="no-servers">Aucun serveur administrable trouvé.</p>
+                <% } else { %>
+                    <% guilds.forEach(guild => { %>
+                        <div class="server-card">
+                            <% const iconUrl = guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=128` : '/images/default-icon.png'; %>
+                            <div class="card-background" style="background-image: url('<%= iconUrl %>');"></div>
+                            <div class="card-content">
+                                <img src="<%= iconUrl %>" alt="Icône" class="server-icon" onerror="this.src='/images/default-icon.png'">
+                                <h3 class="server-name"><%= guild.name %></h3>
+                            </div>
+                            <div class="card-footer">
+                                <% if (guild.botOnServer) { %>
+                                    <a href="/manage/<%= guild.id %>" class="btn-manage"><i class="fas fa-cogs"></i> Gérer</a>
+                                <% } else { %>
+                                    <a href="https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&guild_id=<%= guild.id %>&permissions=8&scope=bot%20applications.commands" target="_blank" class="btn-invite"><i class="fab fa-discord"></i> Inviter</a>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+            </div>
+        </main>
+    </div>
     
-    <!-- Script pour la partie interactive (bouton VIP) -->
     <script>
+        // Le script pour le bouton VIP reste le même
         document.addEventListener('DOMContentLoaded', () => {
             const claimVipBtn = document.getElementById('claim-vip-btn');
             if (claimVipBtn) {
@@ -86,7 +97,6 @@
                         .then(res => res.json())
                         .then(data => {
                             if(data.success) {
-                                // Si succès, on recharge simplement la page pour voir les changements
                                 window.location.reload();
                             } else {
                                 claimVipBtn.innerHTML = data.message || 'Erreur';

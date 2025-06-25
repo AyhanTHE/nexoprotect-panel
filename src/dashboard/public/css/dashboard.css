@@ -1,127 +1,281 @@
-/* dashboard.css (Version améliorée) */
+/* ================================== */
+/* NOUVEAU STYLE POUR LE DASHBOARD  */
+/* ================================== */
 
+/* --- Variables Globales --- */
 :root {
-    --neon-blue: #00aaff;
-    --neon-glow-blue: rgba(0, 170, 255, 0.6);
-    --discord-blurple: #5865F2;
-    --neon-glow-blurple: rgba(88, 101, 242, 0.6);
-    --card-bg: #1f1f3a;
-    --card-border: #2a2a4c;
-    --text-primary: #f0f0f0;
+    --bg-primary: #10101a;
+    --bg-secondary: #181825;
+    --bg-tertiary: #202035;
+    --primary-accent: #6a5af9;
+    --primary-glow: rgba(106, 90, 249, 0.5);
+    --vip-gold: #ffd700;
+    --vip-glow: rgba(255, 215, 0, 0.6);
+    --text-primary: #e0e0e0;
     --text-secondary: #a0a0b0;
+    --border-color: #2a2a4a;
+    --font-family: 'Poppins', sans-serif;
 }
 
+/* --- Base --- */
 body {
-    background-color: #1a1a2e;
+    margin: 0;
+    font-family: var(--font-family);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
 }
 
-.dashboard-container {
-    width: 90%;
-    max-width: 1200px;
-    margin: 2rem auto;
+.dashboard-layout {
+    display: flex;
+}
+
+/* --- Menu Latéral (Sidebar) --- */
+.sidebar {
+    width: 280px;
+    height: 100vh;
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    padding: 1.5rem;
+    box-sizing: border-box;
+}
+
+.sidebar-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+}
+
+.sidebar-header .logo img {
+    width: 40px;
+    height: 40px;
+}
+
+/* --- Carte de Profil --- */
+.profile-card {
+    background-color: var(--bg-tertiary);
+    border-radius: 12px;
+    padding-top: 50px;
+    margin-bottom: 2rem;
+    position: relative;
     text-align: center;
 }
 
-.dashboard-container h1 {
-    color: var(--text-primary);
+.profile-banner {
+    background: linear-gradient(45deg, var(--primary-accent), #c724b1);
+    height: 60px;
+    border-radius: 12px 12px 0 0;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 4px solid var(--bg-secondary);
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.profile-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0.5rem 0;
+}
+
+.profile-grade {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    background-color: rgba(0,0,0,0.2);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.profile-grade.vip {
+    background-color: rgba(255, 215, 0, 0.1);
+    color: var(--vip-gold);
+    text-shadow: 0 0 10px var(--vip-glow);
+}
+
+/* --- Navigation & Footer de la Sidebar --- */
+.sidebar-nav {
+    flex-grow: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.nav-item:hover, .nav-item.active {
+    background-color: var(--primary-accent);
+    color: #fff;
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.btn-vip, .btn-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-vip {
+    background-color: var(--vip-gold);
+    color: #000;
+}
+.btn-vip:hover:not(:disabled) {
+    box-shadow: 0 0 20px var(--vip-glow);
+    transform: scale(1.05);
+}
+.btn-vip:disabled {
+    background-color: #6d5d00;
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+.btn-logout {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+.btn-logout:hover {
+    background-color: #f04747;
+    color: #fff;
+}
+
+/* --- Contenu Principal --- */
+.main-content {
+    margin-left: 280px; /* Doit correspondre à la largeur de la sidebar */
+    padding: 2rem;
+    width: calc(100% - 280px);
+}
+
+.main-header h1 {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
 }
 
-.dashboard-container p {
+.main-header p {
     color: var(--text-secondary);
     font-size: 1.1rem;
-    margin-bottom: 3rem;
 }
 
-#loading-message, .no-servers {
-    color: var(--text-secondary);
-    font-size: 1.2rem;
-}
-
+/* --- Cartes des Serveurs --- */
 .server-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 1.5rem;
+    margin-top: 2rem;
 }
 
 .server-card {
-    background-color: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background-color: var(--bg-secondary);
     border-radius: 12px;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    text-decoration: none;
-    color: var(--text-primary);
-    position: relative;
+    border: 1px solid var(--border-color);
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.server-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.card-background {
+    height: 100px;
+    background-size: cover;
+    background-position: center;
+    filter: blur(8px) brightness(0.4);
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1;
+}
+
+.card-content {
+    position: relative;
+    z-index: 2;
+    padding: 1.5rem;
+    text-align: center;
 }
 
 .server-icon {
-    width: 90px;
-    height: 90px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
-    object-fit: cover;
     margin-bottom: 1rem;
-    background-color: #333;
+    border: 2px solid #fff;
 }
 
 .server-name {
     font-size: 1.2rem;
     font-weight: 600;
-    margin-bottom: 1.5rem;
-    min-height: 48px; /* Empêche le décalage si le nom est sur 1 ou 2 lignes */
+    color: #fff;
 }
 
 .card-footer {
-    margin-top: auto;
-    width: 100%;
+    position: relative;
+    z-index: 2;
+    background-color: rgba(0,0,0,0.2);
+    padding: 1rem;
 }
 
-/* Style commun pour les deux boutons */
 .btn-manage, .btn-invite {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-    width: 100%;
-    padding: 0.8rem 1rem;
+    display: block;
+    width: 90%;
+    margin: 0 auto;
+    padding: 0.7rem;
     border: none;
     border-radius: 8px;
-    font-weight: 600;
+    text-align: center;
     text-decoration: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    transition: all 0.2s ease-in-out;
 }
 
-/* Style spécifique pour le bouton "Gérer" */
 .btn-manage {
-    background-color: var(--neon-blue);
-    color: #fff;
+    background: var(--primary-accent);
+}
+.btn-manage:hover {
+    box-shadow: 0 0 20px var(--primary-glow);
 }
 
-/* Style spécifique pour le bouton "Inviter" */
 .btn-invite {
-    background-color: var(--discord-blurple);
-    color: #fff;
+    background: #5865F2; /* Discord Blurple */
 }
-
-/* Effets de survol avec néon */
-.server-card:hover {
-    transform: translateY(-10px);
-}
-
-.server-card:hover .btn-manage {
-    box-shadow: 0 0 15px var(--neon-glow-blue), 0 0 30px var(--neon-glow-blue);
-    background-color: #33bbff;
-}
-
-.server-card:hover .btn-invite {
-    box-shadow: 0 0 15px var(--neon-glow-blurple), 0 0 30px var(--neon-glow-blurple);
-    background-color: #7289da;
+.btn-invite:hover {
+    box-shadow: 0 0 20px rgba(88, 101, 242, 0.6);
 }
