@@ -119,20 +119,14 @@ app.get('/payment-cancel', (req, res) => {
 // GESTION DES WEBHOOKS PAYPAL
 app.post('/api/paypal-webhook', async (req, res) => {
     try {
-        // =======================================================================
-        // --- DÉBUT DE LA MODIFICATION DE DÉBOGAGE ---
-        // La vérification de sécurité est temporairement désactivée pour isoler le problème.
-        // CELA N'EST PAS SÉCURISÉ POUR UNE UTILISATION NORMALE.
-        // const webhookId = process.env.PAYPAL_WEBHOOK_ID; 
-        // const request = new paypalSDK.webhooks.WebhookVerificationRequest(req.headers, req.body, webhookId);
-        // await paypalClient.execute(request);
-        console.log("AVERTISSEMENT: La vérification du Webhook PayPal est désactivée pour le débogage.");
-        // --- FIN DE LA MODIFICATION DE DÉBOGAGE ---
-        // =======================================================================
-
+        // La vérification de sécurité est maintenant réactivée.
+        const webhookId = process.env.PAYPAL_WEBHOOK_ID; 
+        const request = new paypalSDK.webhooks.WebhookVerificationRequest(req.headers, req.body, webhookId);
+        await paypalClient.execute(request);
+        
         const event = JSON.parse(req.body);
         if (event.event_type === 'CHECKOUT.ORDER.APPROVED') {
-            console.log('🔔 Webhook PayPal reçu : CHECKOUT.ORDER.APPROVED');
+            console.log('🔔 Webhook PayPal reçu et VÉRIFIÉ : CHECKOUT.ORDER.APPROVED');
             const purchaseUnit = event.resource.purchase_units[0];
             const userId = purchaseUnit.custom_id;
             if (userId) {
@@ -153,8 +147,7 @@ app.post('/api/paypal-webhook', async (req, res) => {
         }
         res.sendStatus(200);
     } catch (err) {
-        // Si l'erreur persiste même avec la vérification désactivée, elle vient d'ailleurs.
-        console.error("❌ Erreur lors du traitement du webhook PayPal:", err.message);
+        console.error("❌ Erreur de vérification du webhook PayPal:", err.message);
         res.sendStatus(400); 
     }
 });
