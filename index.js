@@ -1,5 +1,5 @@
 // =================================================================
-//      INDEX.JS AVEC AJOUT DES STATISTIQUES
+//      INDEX.JS AVEC AJOUT DES STATISTIQUES SUR LA PAGE D'ACCUEIL
 // =================================================================
 
 // --- IMPORTS ---
@@ -45,8 +45,37 @@ const paypalClient = new paypalSDK.core.PayPalHttpClient(
     new Environment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
 );
 
-// --- ROUTES DE L'APPLICATION (Authentification, Dashboard, etc.) ---
-app.get('/', (req, res) => { if (req.session.user) return res.redirect('/dashboard'); res.render('index'); });
+// --- ROUTES DE L'APPLICATION ---
+
+// MODIFIÉ : La route de la page d'accueil récupère maintenant les statistiques
+app.get('/', async (req, res) => {
+    if (req.session.user) return res.redirect('/dashboard');
+
+    try {
+        const [vipCount, serverCount] = await Promise.all([
+            db.collection('premiumsubscriptions').countDocuments({ vipExpires: { $gt: new Date() } }),
+            db.collection('botGuilds').countDocuments()
+            // NOTE : Le nombre de bannis est un placeholder. Vous devrez implémenter la logique pour le récupérer.
+        ]);
+
+        const stats = {
+            vipCount: vipCount,
+            bannedCount: 0, // Placeholder
+            serverCount: serverCount
+        };
+
+        res.render('index', { stats }); // On envoie les stats à la page index.ejs
+
+    } catch (error) {
+        console.error("Erreur lors de la récupération des statistiques pour la page d'accueil:", error);
+        // En cas d'erreur, on affiche la page avec des stats par défaut
+        res.render('index', {
+            stats: { vipCount: 0, bannedCount: 0, serverCount: 0 }
+        });
+    }
+});
+
+
 app.get('/logout', (req, res) => { req.session.destroy(() => res.redirect('/')); });
 app.get('/callback', async (req, res) => { const code = req.query.code; if (!code) return res.status(400).send('Erreur: "code" manquant.'); try { const tokenResponse = await fetch('https://discord.com/api/oauth2/token', { method: 'POST', body: new URLSearchParams({ client_id: process.env.CLIENT_ID, client_secret: process.env.CLIENT_SECRET, grant_type: 'authorization_code', code, redirect_uri: process.env.REDIRECT_URI, }), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, }); const tokenData = await tokenResponse.json(); if (tokenData.error) throw new Error(tokenData.error_description); const userResponse = await fetch('https://discord.com/api/users/@me', { headers: { authorization: `Bearer ${tokenData.access_token}` } }); const userData = await userResponse.json(); req.session.accessToken = tokenData.access_token; req.session.user = userData; req.session.save(() => res.redirect('/dashboard')); } catch (error) { console.error("Erreur critique dans /callback:", error); res.status(500).send('Une erreur interne est survenue.'); } });
 
@@ -96,7 +125,7 @@ app.get('/manage/:guildId', async (req, res) => {
     }
 });
 
-
+// ... (le reste de votre code pour le premium et paypal reste inchangé) ...
 // ===============================================
 // --- ROUTES PREMIUM ET PAYPAL (SANS WEBHOOKS) ---
 // ===============================================
@@ -105,34 +134,29 @@ app.get('/manage/:guildId', async (req, res) => {
 app.get('/premium', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
     try {
-        // Récupérer les données pour le grade et les statistiques en parallèle
         const [userDbInfo, vipCount, serverCount] = await Promise.all([
             db.collection('premiumsubscriptions').findOne({ userId: req.session.user.id }),
             db.collection('premiumsubscriptions').countDocuments({ vipExpires: { $gt: new Date() } }),
             db.collection('botGuilds').countDocuments()
-            // NOTE : Le nombre de bannis est un placeholder. Vous devrez implémenter la logique pour le récupérer.
         ]);
-
         const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
         const user = { ...req.session.user, grade };
-
         const stats = {
             vipCount: vipCount,
-            bannedCount: 0, // Placeholder
+            bannedCount: 0,
             serverCount: serverCount
         };
-
         res.render('premium', {
             user: user,
             message: req.query.message || null,
-            stats: stats // Envoyer les statistiques à la page
+            stats: stats
         });
     } catch (error) {
         console.error("Erreur lors du chargement de la page premium:", error);
         res.render('premium', {
             user: req.session.user,
             message: req.query.message || null,
-            stats: { vipCount: 0, bannedCount: 0, serverCount: 0 } // Statistiques par défaut en cas d'erreur
+            stats: { vipCount: 0, bannedCount: 0, serverCount: 0 }
         });
     }
 });
@@ -145,7 +169,7 @@ app.post('/api/create-payment', async (req, res) => {
     request.requestBody({
         intent: 'CAPTURE',
         purchase_units: [{
-            amount: { currency_code: 'EUR', value: '5.00' }, // REMETTRE LE PRIX A 5.00
+            amount: { currency_code: 'EUR', value: '5.00' }, 
             description: `Abonnement Premium 1 mois pour ${req.session.user.username}`,
             custom_id: req.session.user.id
         }],
@@ -166,7 +190,7 @@ app.post('/api/create-payment', async (req, res) => {
     }
 });
 
-// PAIEMENT RÉUSSI (Page de retour pour l'utilisateur)
+// PAIEMENT RÉUSSI
 app.get('/payment-success', async (req, res) => {
     if (!req.query.token) return res.redirect('/premium?message=error');
     const request = new paypalSDK.orders.OrdersCaptureRequest(req.query.token);
