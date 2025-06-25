@@ -118,16 +118,18 @@ app.get('/payment-cancel', (req, res) => {
 
 // GESTION DES WEBHOOKS PAYPAL
 app.post('/api/paypal-webhook', async (req, res) => {
-    if (!paypalSDK.webhooks) {
-        console.error('❌ FATAL: paypalSDK.webhooks est indéfini. Problème de version du SDK.');
-        return res.sendStatus(500);
-    }
-    
-    const webhookId = process.env.PAYPAL_WEBHOOK_ID; 
-    const request = new paypalSDK.webhooks.WebhookVerificationRequest(req.headers, req.body, webhookId);
-
     try {
-        await paypalClient.execute(request);
+        // =======================================================================
+        // --- DÉBUT DE LA MODIFICATION DE DÉBOGAGE ---
+        // La vérification de sécurité est temporairement désactivée pour isoler le problème.
+        // CELA N'EST PAS SÉCURISÉ POUR UNE UTILISATION NORMALE.
+        // const webhookId = process.env.PAYPAL_WEBHOOK_ID; 
+        // const request = new paypalSDK.webhooks.WebhookVerificationRequest(req.headers, req.body, webhookId);
+        // await paypalClient.execute(request);
+        console.log("AVERTISSEMENT: La vérification du Webhook PayPal est désactivée pour le débogage.");
+        // --- FIN DE LA MODIFICATION DE DÉBOGAGE ---
+        // =======================================================================
+
         const event = JSON.parse(req.body);
         if (event.event_type === 'CHECKOUT.ORDER.APPROVED') {
             console.log('🔔 Webhook PayPal reçu : CHECKOUT.ORDER.APPROVED');
@@ -151,7 +153,8 @@ app.post('/api/paypal-webhook', async (req, res) => {
         }
         res.sendStatus(200);
     } catch (err) {
-        console.error("❌ Erreur de vérification du webhook PayPal:", err.message);
+        // Si l'erreur persiste même avec la vérification désactivée, elle vient d'ailleurs.
+        console.error("❌ Erreur lors du traitement du webhook PayPal:", err.message);
         res.sendStatus(400); 
     }
 });
