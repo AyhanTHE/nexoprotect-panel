@@ -1,5 +1,5 @@
 // =================================================================
-//      INDEX.JS COMPLET AVEC INTÉGRATION DES WEBHOOKS PAYPAL
+//      INDEX.JS COMPLET AVEC ACTIVATION PAR REDIRECTION
 // =================================================================
 
 // --- IMPORTS ---
@@ -19,7 +19,6 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'src', 'dashboard', 'views'));
 
 // --- MIDDLEWARES ---
-app.post('/api/paypal-webhook', express.raw({ type: 'application/json' }));
 app.use(express.static(path.join(__dirname, 'src', 'dashboard', 'public')));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -55,24 +54,20 @@ app.get('/manage/:guildId', async (req, res) => { if (!req.session.user) return 
 
 
 // ===============================================
-// --- ROUTES PREMIUM ET PAYPAL (AVEC WEBHOOKS) ---
+// --- ROUTES PREMIUM ET PAYPAL (SANS WEBHOOKS) ---
 // ===============================================
 
 // AFFICHER LA PAGE PREMIUM
-app.get('/premium', async (req, res) => { // <-- Ajout de async
+app.get('/premium', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
     try {
         const usersCollection = db.collection('users');
         const userDbInfo = await usersCollection.findOne({ userId: req.session.user.id });
         const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
-        
-        // On crée l'objet user complet, avec le grade, avant de rendre la page
         const user = { ...req.session.user, grade };
-
         res.render('premium', { user: user, message: req.query.message || null });
     } catch (error) {
         console.error("Erreur lors du chargement de la page premium:", error);
-        // En cas d'erreur, on affiche la page avec l'utilisateur de base pour éviter un crash
         res.render('premium', { user: req.session.user, message: req.query.message || null });
     }
 });
@@ -108,48 +103,44 @@ app.post('/api/create-payment', async (req, res) => {
 
 // PAIEMENT RÉUSSI (Page de retour pour l'utilisateur)
 app.get('/payment-success', async (req, res) => {
-    res.redirect('/premium?message=success');
+    if (!req.query.token) return res.redirect('/premium?message=error');
+
+    const request = new paypalSDK.orders.OrdersCaptureRequest(req.query.token);
+    request.requestBody({});
+
+    try {
+        const capture = await paypalClient.execute(request);
+        const purchaseUnit = capture.result.purchase_units[0];
+        const userId = purchaseUnit.payments.captures[0].custom_id;
+
+        if (userId) {
+            const usersCollection = db.collection('users');
+            const userDb = await usersCollection.findOne({ userId });
+            
+            const newExpiryDate = (userDb && userDb.vipExpires && new Date(userDb.vipExpires) > new Date())
+                ? new Date(new Date(userDb.vipExpires).getTime() + 30 * 24 * 60 * 60 * 1000)
+                : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+            await usersCollection.updateOne(
+                { userId: userId },
+                { $set: { vipExpires: newExpiryDate }, $setOnInsert: { userId: userId } },
+                { upsert: true }
+            );
+            
+            console.log(`✅ [SUCCESS PAGE] VIP activé/prolongé pour l'utilisateur ${userId} jusqu'au ${newExpiryDate.toISOString()}`);
+            res.redirect('/premium?message=success');
+        } else {
+            throw new Error("ID utilisateur non trouvé dans la transaction PayPal.");
+        }
+    } catch (err) {
+        console.error("❌ Erreur lors de la capture du paiement:", err.message);
+        res.redirect('/premium?message=error');
+    }
 });
 
 // PAIEMENT ANNULÉ
 app.get('/payment-cancel', (req, res) => {
     res.redirect('/premium?message=cancelled');
-});
-
-// GESTION DES WEBHOOKS PAYPAL
-app.post('/api/paypal-webhook', async (req, res) => {
-    try {
-        // La vérification de sécurité est maintenant réactivée.
-        const webhookId = process.env.PAYPAL_WEBHOOK_ID; 
-        const request = new paypalSDK.webhooks.WebhookVerificationRequest(req.headers, req.body, webhookId);
-        await paypalClient.execute(request);
-        
-        const event = JSON.parse(req.body);
-        if (event.event_type === 'CHECKOUT.ORDER.APPROVED') {
-            console.log('🔔 Webhook PayPal reçu et VÉRIFIÉ : CHECKOUT.ORDER.APPROVED');
-            const purchaseUnit = event.resource.purchase_units[0];
-            const userId = purchaseUnit.custom_id;
-            if (userId) {
-                const usersCollection = db.collection('users');
-                const userDb = await usersCollection.findOne({ userId });
-                const newExpiryDate = (userDb && userDb.vipExpires && new Date(userDb.vipExpires) > new Date())
-                    ? new Date(new Date(userDb.vipExpires).getTime() + 30 * 24 * 60 * 60 * 1000)
-                    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-                await usersCollection.updateOne(
-                    { userId: userId },
-                    { $set: { vipExpires: newExpiryDate }, $setOnInsert: { userId: userId } },
-                    { upsert: true }
-                );
-                console.log(`✅ [WEBHOOK] VIP activé/prolongé pour l'utilisateur ${userId} jusqu'au ${newExpiryDate.toISOString()}`);
-            } else {
-                console.error("❌ [WEBHOOK] ID Utilisateur (custom_id) manquant dans la notification PayPal.");
-            }
-        }
-        res.sendStatus(200);
-    } catch (err) {
-        console.error("❌ Erreur de vérification du webhook PayPal:", err.message);
-        res.sendStatus(400); 
-    }
 });
 
 // --- ROUTES API EXISTANTES ---
