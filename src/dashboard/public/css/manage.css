@@ -1,4 +1,4 @@
-/* manage.css (Version finale, construite sur votre code) */
+/* manage.css (Version finale, complète et corrigée) */
 
 :root {
     --bg-primary: #10101a;
@@ -184,9 +184,9 @@ body {
     opacity: 1;
 }
 
-/* --- Contenu Principal --- */
+/* --- Styles pour le contenu principal et les onglets --- */
 .manage-main-content {
-    margin-left: 80px; /* Largeur de la sidebar fermée */
+    margin-left: 80px;
     padding: 2rem 3rem;
     width: calc(100% - 80px);
     transition: all 0.3s ease-in-out;
@@ -195,7 +195,6 @@ body {
     margin-left: 280px;
     width: calc(100% - 280px);
 }
-
 .manage-header h1 {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
@@ -205,22 +204,33 @@ body {
     font-size: 1.1rem;
     margin-bottom: 2rem;
 }
-
-/* --- Styles pour les onglets --- */
 .tab-content {
     display: none;
 }
 .tab-content.active {
     display: block;
-    animation: fadeIn 0.5s ease-in-out;
+    animation: fadeIn 0.5s;
 }
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* --- Styles pour les boîtes de configuration générales --- */
+.settings-box {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 1.5rem;
+}
+.settings-box h3 {
+    margin-top: 0;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
 
-/* --- Accordéon pour les modules --- */
+/* --- Styles pour Arrivées & Départs --- */
 .module-accordion {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
@@ -248,8 +258,6 @@ body {
     padding: 0 1.5rem 1.5rem 1.5rem;
     border-top: 1px solid var(--border-color);
 }
-
-/* --- Grille de configuration --- */
 .settings-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -273,8 +281,6 @@ body {
 }
 .textarea-box { min-height: 120px; resize: vertical; }
 .variable-info { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; }
-
-/* --- Section VIP et Prévisualisation --- */
 .setting-locked {
     background-color: rgba(0,0,0,0.2);
     border: 1px dashed var(--border-color);
@@ -296,8 +302,6 @@ body {
 .btn-vip-upgrade:hover { box-shadow: 0 0 15px var(--vip-glow); }
 .setting-vip { display: flex; align-items: center; gap: 0.5rem; }
 .vip-icon { color: var(--vip-gold); }
-
-/* --- Styles pour l'import d'image --- */
 .setting-vip-upload {
     background-color: rgba(0,0,0,0.2);
     border-radius: 8px;
@@ -314,22 +318,10 @@ body {
     cursor: pointer;
     transition: all 0.2s;
 }
-.btn-upload:hover {
-    box-shadow: 0 0 15px var(--primary-glow);
-}
-#banner-preview {
-    margin-top: 1rem;
-}
-#banner-preview img {
-    max-width: 100%;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-}
-#banner-preview.hidden {
-    display: none;
-}
-
-/* --- Prévisualisation --- */
+.btn-upload:hover { box-shadow: 0 0 15px var(--primary-glow); }
+#banner-preview { margin-top: 1rem; }
+#banner-preview img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border-color); }
+#banner-preview.hidden { display: none; }
 .discord-preview { background-color: #2f3136; border-radius: 8px; padding: 1rem; }
 .discord-message { display: flex; gap: 1rem; }
 .discord-avatar { width: 40px; height: 40px; border-radius: 50%; }
@@ -382,3 +374,25 @@ input:checked + .slider { background-color: var(--primary-accent); }
 input:checked + .slider:before { transform: translateX(26px); }
 .slider.round { border-radius: 34px; }
 .slider.round:before { border-radius: 50%; }
+
+/* --- Styles pour l'AutoRôle --- */
+.role-selector-container { background-color: var(--bg-tertiary); border-radius: 8px; padding: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.role-item { display: flex; align-items: center; gap: 0.5rem; background-color: var(--bg-primary); padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+.role-item.selected { border-color: var(--primary-accent); box-shadow: 0 0 10px var(--primary-glow); }
+.role-color { width: 12px; height: 12px; border-radius: 50%; }
+.role-search-input { background: none; border: none; outline: none; color: var(--text-primary); font-family: var(--font-family); flex-grow: 1; padding: 0.4rem; }
+
+/* --- Styles pour l'Auto-Modération --- */
+.automod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.automod-card { background-color: var(--bg-tertiary); border-radius: 8px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+.automod-text h4 { margin: 0 0 0.3rem 0; }
+.automod-text p { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }
+.sanction-config { background-color: var(--bg-tertiary); border-radius: 8px; padding: 1.5rem; }
+.sanction-rule { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.sanction-input { width: 60px; background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 0.6rem; text-align: center; }
+.sanction-select { background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 0.6rem; }
+
+/* --- Styles pour la Modération --- */
+.option-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+.option-row:last-child { border-bottom: none; }
+.option-row p { margin: 0; }

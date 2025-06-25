@@ -19,24 +19,22 @@
             </div>
             
             <nav class="manage-nav">
-                <!-- Les liens ont maintenant un data-tab pour le système d'onglets -->
                 <a href="#" class="nav-category" data-tab="tab-dashboard"><i class="fas fa-tachometer-alt"></i><span>Tableau de bord</span></a>
                 <div class="nav-divider"></div>
                 <h3 class="nav-title">Modules</h3>
                 <a href="#" class="nav-category active" data-tab="tab-welcome"><i class="fas fa-users"></i><span>Arrivées & Départs</span></a>
+                <a href="#" class="nav-category" data-tab="tab-autorole"><i class="fas fa-user-tag"></i><span>Rôles automatiques</span></a>
+                <a href="#" class="nav-category" data-tab="tab-automod"><i class="fas fa-robot"></i><span>Auto-Modération</span></a>
                 <a href="#" class="nav-category" data-tab="tab-moderation"><i class="fas fa-shield-alt"></i><span>Modération</span></a>
-                <a href="#" class="nav-category" data-tab="tab-levels"><i class="fas fa-gamepad"></i><span>Niveaux</span></a>
             </nav>
 
             <div class="user-profile-section">
-                 <% if (user) { %>
+                <% if (user) { %>
                     <div class="profile-info">
                         <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png?size=64" alt="Avatar" class="profile-avatar-small">
                         <div class="profile-text">
                             <span class="profile-name"><%= user.username %></span>
-                            <span class="profile-grade <%= user.grade === 'VIP' ? 'vip' : '' %>">
-                                <i class="fas <%= user.grade === 'VIP' ? 'fa-crown' : 'fa-user' %>"></i> <%= user.grade %>
-                            </span>
+                            <span class="profile-grade <%= user.grade === 'VIP' ? 'vip' : '' %>"><i class="fas <%= user.grade === 'VIP' ? 'fa-crown' : 'fa-user' %>"></i> <%= user.grade %></span>
                         </div>
                     </div>
                 <% } %>
@@ -45,20 +43,27 @@
         </aside>
 
         <main class="manage-main-content">
-            <!-- CONTENU DE L'ONGLET 1 : ARRIVÉES ET DÉPARTS -->
+            <!-- ONGLET: TABLEAU DE BORD (Placeholder) -->
+            <div id="tab-dashboard" class="tab-content">
+                <header class="manage-header"><h1>Tableau de bord</h1><p>Vue d'ensemble et statistiques du serveur.</p></header>
+                <!-- Contenu du tableau de bord à venir ici -->
+            </div>
+
+            <!-- ONGLET: ARRIVÉES & DÉPARTS -->
             <div id="tab-welcome" class="tab-content active">
                 <header class="manage-header">
                     <h1>Arrivées et départs</h1>
                     <p>Configurez ici les messages de bienvenue et d'au revoir pour votre serveur.</p>
                 </header>
                 <form id="welcome-settings-form">
+                    <!-- Section Bienvenue -->
                     <details class="module-accordion" open>
                         <summary class="module-summary">
                             <div class="summary-title"><i class="fas fa-hand-sparkles"></i><h3>Messages de Bienvenue</h3></div>
                             <label class="switch"><input type="checkbox" name="welcomeEnabled" <%= settings.welcome && settings.welcome.enabled ? 'checked' : '' %>><span class="slider round"></span></label>
                         </summary>
                         <div class="module-content">
-                            <div class="settings-grid">
+                             <div class="settings-grid">
                                 <div class="settings-column">
                                     <label for="welcome-channel">Salon des messages de bienvenue</label>
                                     <select id="welcome-channel" name="welcomeChannelId" class="select-box">
@@ -67,129 +72,137 @@
                                     </select>
                                     <label for="welcome-message">Message personnalisé</label>
                                     <textarea id="welcome-message" name="welcomeMessage" class="textarea-box" placeholder="Ex: Bienvenue {user.username} !"><%= settings.welcome ? settings.welcome.message : '' %></textarea>
-                                    
                                     <label>Bannière de bienvenue</label>
                                     <% if (user.grade === 'VIP') { %>
                                         <div class="setting-vip-upload">
                                             <i class="fas fa-crown vip-icon"></i>
                                             <input type="file" id="banner-upload-input" accept="image/png, image/jpeg, image/gif" style="display: none;">
                                             <input type="hidden" name="welcomeBannerUrl" id="banner-base64-input" value="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>">
-                                            <button type="button" class="btn-upload" onclick="document.getElementById('banner-upload-input').click()">
-                                                <i class="fas fa-upload"></i> Importer une image
-                                            </button>
-                                            <div id="banner-preview" class="<%= settings.welcome && settings.welcome.bannerUrl ? '' : 'hidden' %>">
-                                                <img src="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>" alt="Aperçu de la bannière">
-                                            </div>
+                                            <button type="button" class="btn-upload" onclick="document.getElementById('banner-upload-input').click()"><i class="fas fa-upload"></i> Importer une image</button>
+                                            <div id="banner-preview" class="<%= settings.welcome && settings.welcome.bannerUrl ? '' : 'hidden' %>"><img src="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>" alt="Aperçu de la bannière"></div>
                                         </div>
                                     <% } else { %>
                                         <div class="setting-locked"><p>Cette fonctionnalité est réservée aux membres VIP.</p><button type="button" class="btn-vip-upgrade"><i class="fas fa-star"></i> Devenir VIP</button></div>
                                     <% } %>
                                 </div>
                                 <div class="preview-column">
-                                    <label>Prévisualisation</label>
+                                     <label>Prévisualisation</label>
                                      <div class="discord-preview"><div class="discord-message"><img src="https://cdn.discordapp.com/embed/avatars/1.png" class="discord-avatar" alt="avatar"><div class="discord-message-content"><div class="discord-user-info"><span class="discord-username">NexoProtect</span><span class="discord-bot-tag">APP</span></div><div class="discord-text"><p>Ho ! Un nouveau membre !</p><p>✨ Bienvenue, <%= user.username %> ! ✨</p></div></div></div></div>
                                 </div>
                             </div>
                         </div>
                     </details>
-                    <!-- ... (accordéon pour les messages d'au revoir) ... -->
+                    <!-- Section Au revoir -->
+                    <details class="module-accordion">
+                        <summary class="module-summary">
+                            <div class="summary-title"><i class="fas fa-door-open"></i><h3>Messages d'Au Revoir</h3></div>
+                            <label class="switch"><input type="checkbox" name="goodbyeEnabled" <%= settings.goodbye && settings.goodbye.enabled ? 'checked' : '' %>><span class="slider round"></span></label>
+                        </summary>
+                        <div class="module-content">
+                           <!-- Contenu pour les messages d'au revoir ici -->
+                        </div>
+                    </details>
                 </form>
             </div>
 
-            <!-- CONTENU DE L'ONGLET 2 : MODÉRATION (Placeholder) -->
-            <div id="tab-moderation" class="tab-content">
-                 <header class="manage-header"><h1>Modération</h1><p>Ce module est en cours de développement.</p></header>
+            <!-- ONGLET: RÔLES AUTOMATIQUES -->
+            <div id="tab-autorole" class="tab-content">
+                <header class="manage-header"><h1>Rôles automatiques</h1><p>Définissez quels rôles attribuer aux nouveaux membres.</p></header>
+                <div class="settings-box"><h3>Rôles à l'arrivée</h3><div class="role-selector-container"><input type="text" class="role-search-input" placeholder="+ Choisissez des rôles"></div></div>
             </div>
-            
-            <!-- CONTENU DE L'ONGLET 3 : NIVEAUX (Placeholder) -->
-            <div id="tab-levels" class="tab-content">
-                <header class="manage-header"><h1>Niveaux</h1><p>Ce module est en cours de développement.</p></header>
+
+            <!-- ONGLET: AUTO-MODÉRATION -->
+            <div id="tab-automod" class="tab-content">
+                <header class="manage-header"><h1>Auto-Modération</h1><p>Configurez les fonctionnalités d'auto-modération.</p></header>
+                <h3>Détection d'infractions</h3>
+                <div class="automod-grid">
+                    <div class="automod-card"><div class="automod-text"><h4>Invitations Discord</h4><p>Détection des liens d'invitations.</p></div><label class="switch"><input type="checkbox" checked><span class="slider round"></span></label></div>
+                    <div class="automod-card"><div class="automod-text"><h4>Liens externes</h4><p>Détection des liens externes.</p></div><label class="switch"><input type="checkbox"><span class="slider round"></span></label></div>
+                </div>
+            </div>
+
+             <!-- ONGLET: MODÉRATION -->
+            <div id="tab-moderation" class="tab-content">
+                <header class="manage-header"><h1>Modération</h1><p>Personnalisez le comportement des actions de modération.</p></header>
+                 <div class="settings-box">
+                    <h3>Options</h3>
+                    <div class="option-row"><p>Masquer le pseudo du modérateur en MP</p><label class="switch"><input type="checkbox"><span class="slider round"></span></label></div>
+                     <div class="option-row"><p>Masquer les réponses des commandes de modération</p><label class="switch"><input type="checkbox" checked><span class="slider round"></span></label></div>
+                </div>
             </div>
         </main>
     </div>
 
     <div class="save-bar" id="save-bar">
-         <p id="save-status">Des changements non sauvegardés.</p>
-        <button type="button" id="save-button" class="btn-save"><i class="fas fa-save"></i> Enregistrer les changements</button>
+        <p id="save-status">Des changements non sauvegardés.</p>
+        <button type="button" id="save-button" class="btn-save"><i class="fas fa-save"></i> Enregistrer</button>
     </div>
 
     <script>
-        // SCRIPT POUR LA GESTION DES ONGLETS
         document.addEventListener('DOMContentLoaded', () => {
+            // Logique pour changer d'onglet
             const tabs = document.querySelectorAll('.nav-category');
             const contents = document.querySelectorAll('.tab-content');
-            const saveBar = document.getElementById('save-bar');
-            const saveButton = document.getElementById('save-button');
-            const saveStatus = document.getElementById('save-status');
-            const form = document.getElementById('welcome-settings-form');
-
-
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     e.preventDefault();
-                    
                     tabs.forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
-                    
                     const targetId = tab.getAttribute('data-tab');
                     contents.forEach(content => {
                         content.classList.remove('active');
-                        if (content.id === targetId) {
-                            content.classList.add('active');
-                        }
+                        if (content.id === targetId) content.classList.add('active');
                     });
                 });
             });
-            
-            if(form){
+
+            // Logique pour faire apparaître la barre de sauvegarde
+            const form = document.getElementById('welcome-settings-form');
+            const saveBar = document.getElementById('save-bar');
+            if (form && saveBar) {
                 form.addEventListener('input', () => {
-                   if(saveBar) saveBar.classList.add('visible');
+                    saveBar.classList.add('visible');
                 });
             }
 
-            if(saveButton){
-                 saveButton.addEventListener('click', () => {
+            // Logique pour le bouton de sauvegarde
+            const saveButton = document.getElementById('save-button');
+            const saveStatus = document.getElementById('save-status');
+            if(saveButton && form) {
+                saveButton.addEventListener('click', () => {
                     saveButton.disabled = true;
                     saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
-
                     const guildId = window.location.pathname.split('/').pop();
                     const formData = new FormData(form);
-
                     const welcomeData = {
                         enabled: formData.get('welcomeEnabled') === 'on',
                         channelId: formData.get('welcomeChannelId'),
                         message: formData.get('welcomeMessage'),
                         bannerUrl: formData.get('welcomeBannerUrl') || null
                     };
-
                     fetch(`/api/settings/${guildId}/welcome`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(welcomeData)
-                    })
-                    .then(res => res.json())
-                    .then(data => {
+                    }).then(res => res.json()).then(data => {
                         if (data.success) {
                             saveStatus.textContent = 'Changements enregistrés !';
-                           if(saveBar) saveBar.classList.remove('visible');
+                            if(saveBar) saveBar.classList.remove('visible');
                         } else {
                             saveStatus.textContent = 'Une erreur est survenue.';
                         }
-                    })
-                    .finally(() => {
+                    }).finally(() => {
                         saveButton.disabled = false;
-                        saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer les changements';
+                        saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
                     });
                 });
             }
 
-
-            // SCRIPT POUR L'IMPORT DE BANNIÈRE
+            // Logique pour l'import de bannière
             const bannerInput = document.getElementById('banner-upload-input');
             const bannerBase64Input = document.getElementById('banner-base64-input');
             const bannerPreviewContainer = document.getElementById('banner-preview');
             const bannerPreviewImg = bannerPreviewContainer ? bannerPreviewContainer.querySelector('img') : null;
-
             if (bannerInput) {
                 bannerInput.addEventListener('change', () => {
                     const file = bannerInput.files[0];
@@ -200,7 +213,7 @@
                             bannerPreviewImg.src = base64String;
                             bannerBase64Input.value = base64String;
                             bannerPreviewContainer.classList.remove('hidden');
-                            if(saveBar) saveBar.classList.add('visible'); // Affiche la barre de sauvegarde
+                            if(saveBar) saveBar.classList.add('visible');
                         };
                         reader.readAsDataURL(file);
                     }
