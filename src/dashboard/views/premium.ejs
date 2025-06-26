@@ -35,7 +35,6 @@
             color: #f39c12;
             display: block;
         }
-        /* NOUVEAUX STYLES POUR LA LISTE DES AVANTAGES */
         .features-list {
             text-align: left;
             margin: 2rem 0;
@@ -88,18 +87,16 @@
 
             <div class="sidebar-footer">
                 <% if (user) { %>
-                    <% if (user.grade !== 'VIP') { %>
-                        <% if (!user.usedTrial) { %>
-                            <button id="claim-trial-btn" class="btn-vip">
-                                <i class="fas fa-star"></i> 
-                                <span>1 jour de VIP GRATUIT</span>
-                            </button>
-                        <% } %>
-                        <a href="/premium" class="btn-premium">
-                            <i class="fas fa-gem"></i>
-                            <span>Devenir Premium</span>
-                        </a>
+                    <% if (user.grade !== 'VIP' && !user.usedTrial) { %>
+                        <button id="claim-trial-btn" class="btn-vip">
+                            <i class="fas fa-star"></i> 
+                            <span>1 jour de VIP GRATUIT</span>
+                        </button>
                     <% } %>
+                    <a href="/premium" class="btn-premium">
+                        <i class="fas fa-gem"></i>
+                        <span>Devenir Premium</span>
+                    </a>
                 <% } %>
                 <a href="/logout" class="btn-logout">
                     <i class="fas fa-sign-out-alt"></i>
@@ -134,7 +131,6 @@
 
                     <h2>Un accès exclusif à des fonctionnalités uniques</h2>
                     
-                    <!-- TEXTE MIS À JOUR AVEC UNE LISTE -->
                     <p>Le Premium NexoProtect n'est pas juste un grade, c'est une nouvelle dimension de contrôle et de prestige pour votre serveur. Voici ce que vous débloquez :</p>
                     
                     <div class="features-list">
@@ -176,32 +172,9 @@
                     <% } %>
                 </div>
             </div>
+            
+            <!-- SECTION STATISTIQUES SUPPRIMÉE DE CETTE PAGE -->
 
-            <!-- SECTION STATISTIQUES -->
-            <% if (stats) { %>
-            <div class="stats-section">
-                <div class="stat-card">
-                    <i class="fas fa-crown"></i>
-                    <h3><%= stats.vipCount %></h3>
-                    <p>VIP Actifs</p>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-gavel"></i>
-                    <h3><%= stats.bannedCount %></h3>
-                    <p>Membres Bannis</p>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-briefcase"></i>
-                    <h3>1 mois</h3>
-                    <p>d'Expérience</p>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-shield-alt"></i>
-                    <h3><%= stats.serverCount %></h3>
-                    <p>Serveurs Protégés</p>
-                </div>
-            </div>
-            <% } %>
         </main>
     </div>
     
@@ -230,7 +203,6 @@
                 paymentBtn.addEventListener('click', () => {
                     paymentBtn.disabled = true;
                     paymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirection vers PayPal...';
-
                     fetch('/api/create-payment', { method: 'POST' })
                         .then(res => res.json())
                         .then(data => {
