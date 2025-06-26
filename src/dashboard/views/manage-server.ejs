@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <link rel="icon" href="/images/logo.png" type="image/png"> 
 </head>
 <body>
     <div class="manage-layout">
@@ -132,7 +133,21 @@
                                 </div>
                                 <div class="preview-column">
                                     <label>Prévisualisation</label>
-                                    <div class="discord-preview"><div class="discord-message"><img src="https://cdn.discordapp.com/embed/avatars/1.png" class="discord-avatar" alt="avatar"><div class="discord-message-content"><div class="discord-user-info"><span class="discord-username">NexoProtect</span><span class="discord-bot-tag">APP</span></div><div class="discord-text"><p>Ho ! Un nouveau membre !</p><p>✨ Bienvenue, <%= user.username %> ! ✨</p></div></div></div></div>
+                                    <div class="discord-preview">
+                                        <div class="discord-message">
+                                            <img src="https://cdn.discordapp.com/embed/avatars/1.png" class="discord-avatar" alt="avatar">
+                                            <div class="discord-message-content">
+                                                <div class="discord-user-info">
+                                                    <span class="discord-username">NexoProtect</span>
+                                                    <span class="discord-bot-tag">APP</span>
+                                                </div>
+                                                <div class="discord-text">
+                                                    <p>Ho ! Un nouveau membre !</p>
+                                                    <p>✨ Bienvenue, <%= user.username %> ! ✨</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -173,9 +188,26 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // C'est LA LIGNE la plus susceptible d'être la source de l'erreur "Unexpected identifier 'or'".
+            // Ajout d'un try/catch robuste pour gérer les données JSON malformées.
             const allServerRolesJSON = '<%- JSON.stringify(roles) %>';
-            const allServerRoles = JSON.parse(allServerRolesJSON);
-    
+            let allServerRoles = [];
+            try {
+                allServerRoles = JSON.parse(allServerRolesJSON);
+            } catch (e) {
+                console.error("Erreur lors du parsing des rôles du serveur (JSON malformé ?):", e);
+                console.error("JSON des rôles brut reçu :", allServerRolesJSON);
+                // Si une erreur de parsing se produit, on s'assure que allServerRoles est un tableau vide.
+                allServerRoles = []; 
+                alert("Erreur: Les données des rôles du serveur n'ont pas pu être chargées correctement. Veuillez vérifier la console pour plus de détails.");
+            }
+            
+            // Si allServerRoles n'est pas un tableau après le parsing (suite à une erreur ou une donnée inattendue)
+            if (!Array.isArray(allServerRoles)) {
+                allServerRoles = []; 
+                console.warn("allServerRoles n'est pas un tableau, initialisation à un tableau vide.");
+            }
+
             // --- GESTION DES ONGLETS ---
             const tabs = document.querySelectorAll('.nav-category');
             const contents = document.querySelectorAll('.tab-content');
@@ -196,7 +228,7 @@
                     activateTab(tab);
                 });
             });
-            activateTab(document.querySelector('.nav-category.active'));
+            activateTab(document.querySelector('.nav-category.active')); // Active l'onglet initial au chargement
 
             // --- BARRE DE SAUVEGARDE ---
             const saveBar = document.getElementById('save-bar');
@@ -221,6 +253,8 @@
             };
             document.querySelectorAll('.module-toggle-switch').forEach(switchInput => {
                 switchInput.addEventListener('change', () => handleModuleToggle(switchInput));
+                // Initialiser l'état au chargement
+                handleModuleToggle(switchInput); 
             });
 
             // --- LOGIQUE SÉLECTEUR DE RÔLE ---
@@ -232,13 +266,16 @@
 
             if (selectorWrapper) {
                 selectorWrapper.addEventListener('click', (e) => {
+                    // Si le clic n'est pas sur le bouton de suppression, focus l'input
                     if (!e.target.closest('.remove-role-btn')) {
                         searchInput.focus();
                     }
                 });
             }
 
-            const selectedRoles = new Set(hiddenInput.value ? hiddenInput.value.split(',') : []);
+            // Initialiser selectedRoles avec les valeurs actuelles des paramètres (filtrer les éléments vides)
+            const initialSelectedRoles = hiddenInput.value ? hiddenInput.value.split(',').filter(Boolean) : [];
+            const selectedRoles = new Set(initialSelectedRoles);
             
             const updateSelectedDisplay = () => {
                 selectedContainer.innerHTML = '';
@@ -251,7 +288,8 @@
                         
                         const colorSpan = document.createElement('span');
                         colorSpan.className = 'role-pill-color';
-                        colorSpan.style.backgroundColor = role.color;
+                        // Assurez-vous que la couleur est toujours une chaîne valide
+                        colorSpan.style.backgroundColor = role.color || '#99AAB5'; // Couleur par défaut si manquante
                         pill.appendChild(colorSpan);
 
                         const nameSpan = document.createElement('span');
@@ -268,6 +306,7 @@
                         selectedContainer.appendChild(pill);
                     }
                 });
+                // Mettre à jour l'input caché pour la soumission du formulaire
                 hiddenInput.value = Array.from(selectedRoles).join(',');
             };
 
@@ -279,43 +318,50 @@
 
             const addRole = (roleId) => {
                 const role = allServerRoles.find(r => r.id === roleId);
-                if (role && !role.canManage) {
+                // Vérifier si le rôle existe et si le bot a la permission de le gérer
+                if (!role) {
+                    alert("Ce rôle n'existe plus ou n'est pas disponible.");
+                    return;
+                }
+                if (!role.canManage) {
                     alert("Le bot n'a pas les permissions pour gérer ce rôle.");
                     return;
                 }
                 selectedRoles.add(roleId);
                 updateSelectedDisplay();
-                searchInput.value = '';
-                resultsContainer.classList.remove('visible');
+                searchInput.value = ''; // Effacer l'input de recherche après sélection
+                resultsContainer.classList.remove('visible'); // Cacher les résultats de recherche
                 showSaveBar();
             };
 
             const showResults = () => {
                 const searchTerm = searchInput.value.toLowerCase();
+                // Filtrer les rôles déjà sélectionnés et ceux qui ne correspondent pas à la recherche
                 const filteredRoles = allServerRoles.filter(role => 
                     !selectedRoles.has(role.id) && role.name.toLowerCase().includes(searchTerm)
                 );
                 
                 resultsContainer.innerHTML = '';
                 
+                // Afficher tous les rôles non sélectionnés si la barre de recherche est vide, sinon les filtrés
                 const rolesToShow = searchTerm ? filteredRoles : allServerRoles.filter(role => !selectedRoles.has(role.id));
 
                 if (rolesToShow.length === 0) {
-                     resultsContainer.innerHTML = '<div class="result-item disabled">Aucun rôle trouvé</div>';
+                    resultsContainer.innerHTML = '<div class="result-item disabled">Aucun rôle trouvé</div>';
                 } else {
                     rolesToShow.forEach(role => {
                         const item = document.createElement('div');
                         item.className = 'result-item';
                         if (!role.canManage) {
                             item.classList.add('disabled');
-                            item.title = "Le bot ne peut pas gérer ce rôle.";
+                            item.title = "Le bot ne peut pas gérer ce rôle. Assurez-vous que son rôle est plus élevé.";
                         } else {
                            item.onclick = () => addRole(role.id);
                         }
                         
                         const colorSpan = document.createElement('span');
                         colorSpan.className = 'role-pill-color';
-                        colorSpan.style.backgroundColor = role.color;
+                        colorSpan.style.backgroundColor = role.color || '#99AAB5'; // Couleur par défaut
                         item.appendChild(colorSpan);
                         item.append(role.name);
                         resultsContainer.appendChild(item);
@@ -326,12 +372,13 @@
 
             searchInput.addEventListener('input', showResults);
             searchInput.addEventListener('focus', showResults);
+            // Cacher les résultats si on clique en dehors du sélecteur
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.role-selector-wrapper')) {
                     resultsContainer.classList.remove('visible');
                 }
             });
-            updateSelectedDisplay();
+            updateSelectedDisplay(); // Appeler au chargement pour afficher les rôles déjà sélectionnés
 
             // --- LOGIQUE DE SAUVEGARDE ---
             const saveButton = document.getElementById('save-button');
@@ -339,6 +386,8 @@
                 saveButton.addEventListener('click', async () => {
                     saveButton.disabled = true;
                     saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+                    document.getElementById('save-status').textContent = 'Enregistrement en cours...';
+
                     const guildId = window.location.pathname.split('/').pop();
                     const promises = [];
                     document.querySelectorAll('form').forEach(form => {
@@ -346,16 +395,18 @@
                         if (!formName) return;
                         let formData = {};
                         if (formName === 'welcome') {
+                            // S'assurer que les valeurs sont toujours présentes, même si vides
                             formData = {
-                                enabled: form.querySelector('[name=welcomeEnabled]').checked,
-                                channelId: form.querySelector('[name=welcomeChannelId]').value,
-                                message: form.querySelector('[name=welcomeMessage]').value,
-                                bannerUrl: form.querySelector('[name=welcomeBannerUrl]') ? form.querySelector('[name=welcomeBannerUrl]').value : null,
+                                enabled: form.querySelector('[name=welcomeEnabled]')?.checked || false,
+                                channelId: form.querySelector('[name=welcomeChannelId]')?.value || '',
+                                message: form.querySelector('[name=welcomeMessage]')?.value || '',
+                                bannerUrl: form.querySelector('[name=welcomeBannerUrl]')?.value || null,
                             };
                         } else if (formName === 'autorole') {
                             formData = {
-                                enabled: form.querySelector('[name=autoroleEnabled]').checked,
-                                roles: form.querySelector('[name=autoroleRoles]').value.split(',').filter(Boolean) 
+                                enabled: form.querySelector('[name=autoroleEnabled]')?.checked || false,
+                                // Envoyer directement le Set de rôles converti en tableau pour le backend
+                                roles: Array.from(selectedRoles) 
                             };
                         }
                         promises.push(fetch(`/api/settings/${guildId}/${formName}`, { 
@@ -366,14 +417,24 @@
                     });
                     try {
                         const responses = await Promise.all(promises);
+                        let allSuccess = true;
                         for (const res of responses) {
-                            if (!res.ok) throw new Error(`Échec d'une sauvegarde: ${res.statusText}`);
+                            if (!res.ok) {
+                                allSuccess = false;
+                                const errorData = await res.json(); 
+                                throw new Error(`Échec d'une sauvegarde: ${res.status} - ${errorData.message || 'Erreur inconnue.'}`);
+                            }
                         }
-                        document.getElementById('save-status').textContent = 'Changements enregistrés !';
-                        if(saveBar) setTimeout(() => saveBar.classList.remove('visible'), 2000);
+
+                        if (allSuccess) {
+                            document.getElementById('save-status').textContent = 'Changements enregistrés !';
+                            if(saveBar) setTimeout(() => saveBar.classList.remove('visible'), 2000);
+                        }
                     } catch (error) {
-                        document.getElementById('save-status').textContent = 'Une erreur est survenue.';
-                        console.error("Save error:", error);
+                        document.getElementById('save-status').textContent = 'Une erreur est survenue lors de l\'enregistrement.';
+                        console.error("Erreur de sauvegarde:", error);
+                        // Afficher une alerte plus conviviale à l'utilisateur
+                        alert("Erreur lors de l'enregistrement des paramètres : " + error.message);
                     } finally {
                         setTimeout(() => {
                             saveButton.disabled = false;
@@ -389,18 +450,40 @@
                 const bannerBase64Input = document.getElementById('banner-base64-input');
                 const bannerPreviewContainer = document.getElementById('banner-preview');
                 const bannerPreviewImg = bannerPreviewContainer.querySelector('img');
+
                 bannerInput.addEventListener('change', () => {
                     const file = bannerInput.files[0];
-                    if (file && bannerPreviewImg) {
+                    if (file) {
+                        // Vérifier la taille du fichier (ex: max 2MB)
+                        if (file.size > 2 * 1024 * 1024) { // 2MB
+                            alert("L'image est trop grande. La taille maximale est de 2 Mo.");
+                            bannerInput.value = ''; // Réinitialiser le champ de fichier
+                            return;
+                        }
+
                         const reader = new FileReader();
                         reader.onload = (e) => {
                             const base64String = e.target.result;
-                            bannerPreviewImg.src = base64String;
-                            bannerBase64Input.value = base64String;
-                            bannerPreviewContainer.classList.remove('hidden');
-                            showSaveBar();
+                            if (bannerPreviewImg) {
+                                bannerPreviewImg.src = base64String;
+                                bannerBase64Input.value = base64String;
+                                bannerPreviewContainer.classList.remove('hidden');
+                                showSaveBar();
+                            }
+                        };
+                        reader.onerror = () => {
+                            console.error("Erreur lors de la lecture du fichier.");
+                            alert("Impossible de lire le fichier image.");
                         };
                         reader.readAsDataURL(file);
+                    } else {
+                        // Si aucun fichier n'est sélectionné ou si l'utilisateur annule
+                        if (bannerPreviewImg) {
+                            bannerPreviewImg.src = '';
+                            bannerBase64Input.value = '';
+                            bannerPreviewContainer.classList.add('hidden');
+                            showSaveBar();
+                        }
                     }
                 });
             }
