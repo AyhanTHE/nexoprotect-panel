@@ -29,7 +29,6 @@
                 <div class="nav-divider"></div>
                 <h3 class="nav-title">Modules</h3>
                 <a href="#" class="nav-category" data-tab="tab-welcome"><i class="fas fa-users"></i><span>Arrivées & Départs</span></a>
-                <a href="#" class="nav-category" data-tab="tab-autorole"><i class="fas fa-user-tag"></i><span>Rôles automatiques</span></a>
                 <a href="#" class="nav-category" data-tab="tab-automod"><i class="fas fa-robot"></i><span>Auto-Modération</span></a>
                 <a href="#" class="nav-category" data-tab="tab-moderation"><i class="fas fa-shield-alt"></i><span>Modération</span></a>
             </nav>
@@ -155,27 +154,6 @@
                 </form>
             </div>
 
-            <div id="tab-autorole" class="tab-content">
-                <header class="manage-header"><h1>Rôles automatiques</h1><p>Définissez quels rôles attribuer automatiquement aux nouveaux membres.</p></header>
-                <form id="autorole-settings-form" data-form-name="autorole">
-                    <div class="settings-box <%= (settings.autorole && settings.autorole.enabled) ? 'is-enabled' : '' %>">
-                        <div class="box-header">
-                            <h3>Rôles à l'arrivée</h3>
-                            <label class="switch"><input type="checkbox" name="autoroleEnabled" class="module-toggle-switch" <%= (settings.autorole && settings.autorole.enabled) ? 'checked' : '' %>><span class="slider round"></span></label>
-                        </div>
-                        <div class="module-body">
-                            <p class="box-description">Attribuez un ou plusieurs rôles aux membres dès leur arrivée.</p>
-                            <div class="role-selector-wrapper">
-                                <div class="selected-roles-container" id="selected-roles-container"></div>
-                                <input type="text" id="role-search-input" placeholder="Chercher ou sélectionner un rôle...">
-                                <div class="role-search-results" id="role-search-results"></div>
-                            </div>
-                            <input type="hidden" name="autoroleRoles" id="autorole-roles-input" value="<%= (settings.autorole && settings.autorole.roles) ? settings.autorole.roles.join(',') : '' %>">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            
             <div id="tab-automod" class="tab-content"><header class="manage-header"><h1>Auto-Modération</h1><p>Ce module est en cours de développement.</p></header></div>
             <div id="tab-moderation" class="tab-content"><header class="manage-header"><h1>Modération</h1><p>Ce module est en cours de développement.</p></header></div>
         </main>
@@ -188,25 +166,20 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // C'est LA LIGNE la plus susceptible d'être la source de l'erreur "Unexpected identifier 'or'".
-            // Ajout d'un try/catch robuste pour gérer les données JSON malformées.
-            const allServerRolesJSON = '<%- JSON.stringify(roles) %>';
+            // allServerRoles n'est plus nécessaire car le module autorole est supprimé.
+            // On peut le garder vide ou le supprimer complètement si aucune autre partie ne l'utilise.
+            // Pour la sécurité, on le garde en tant que tableau vide.
+            const allServerRolesJSON = '<%- JSON.stringify([]) %>'; // Toujours un JSON valide d'un tableau vide
             let allServerRoles = [];
-
-            // *** AJOUT POUR LE DÉBOGAGE : Affichez la chaîne JSON brute ***
-            console.log("JSON des rôles brut (depuis EJS) :", allServerRolesJSON);
-
             try {
                 allServerRoles = JSON.parse(allServerRolesJSON);
             } catch (e) {
                 console.error("Erreur lors du parsing des rôles du serveur (JSON malformé ?):", e);
                 console.error("La chaîne JSON qui a échoué :", allServerRolesJSON);
-                // Si une erreur de parsing se produit, on s'assure que allServerRoles est un tableau vide.
                 allServerRoles = []; 
                 alert("Erreur: Les données des rôles du serveur n'ont pas pu être chargées correctement. Veuillez vérifier la console pour plus de détails.");
             }
             
-            // Si allServerRoles n'est pas un tableau après le parsing (suite à une erreur ou une donnée inattendue)
             if (!Array.isArray(allServerRoles)) {
                 allServerRoles = []; 
                 console.warn("allServerRoles n'est pas un tableau valide après parsing, initialisation à un tableau vide.");
@@ -261,128 +234,9 @@
                 handleModuleToggle(switchInput); 
             });
 
-            // --- LOGIQUE SÉLECTEUR DE RÔLE ---
-            const searchInput = document.getElementById('role-search-input');
-            const resultsContainer = document.getElementById('role-search-results');
-            const selectedContainer = document.getElementById('selected-roles-container');
-            const hiddenInput = document.getElementById('autorole-roles-input');
-            const selectorWrapper = document.querySelector('.role-selector-wrapper');
-
-            if (selectorWrapper) {
-                selectorWrapper.addEventListener('click', (e) => {
-                    // Si le clic n'est pas sur le bouton de suppression, focus l'input
-                    if (!e.target.closest('.remove-role-btn')) {
-                        searchInput.focus();
-                    }
-                });
-            }
-
-            // Initialiser selectedRoles avec les valeurs actuelles des paramètres (filtrer les éléments vides)
-            const initialSelectedRoles = hiddenInput.value ? hiddenInput.value.split(',').filter(Boolean) : [];
-            const selectedRoles = new Set(initialSelectedRoles);
-            
-            const updateSelectedDisplay = () => {
-                selectedContainer.innerHTML = '';
-                selectedRoles.forEach(roleId => {
-                    const role = allServerRoles.find(r => r.id === roleId);
-                    if (role) {
-                        const pill = document.createElement('div');
-                        pill.className = 'role-pill';
-                        pill.dataset.roleId = role.id;
-                        
-                        const colorSpan = document.createElement('span');
-                        colorSpan.className = 'role-pill-color';
-                        // Assurez-vous que la couleur est toujours une chaîne valide
-                        colorSpan.style.backgroundColor = role.color || '#99AAB5'; // Couleur par défaut si manquante
-                        pill.appendChild(colorSpan);
-
-                        const nameSpan = document.createElement('span');
-                        nameSpan.textContent = role.name;
-                        pill.appendChild(nameSpan);
-
-                        const removeBtn = document.createElement('button');
-                        removeBtn.type = 'button';
-                        removeBtn.className = 'remove-role-btn';
-                        removeBtn.innerHTML = '&times;';
-                        removeBtn.onclick = () => removeRole(role.id);
-                        pill.appendChild(removeBtn);
-
-                        selectedContainer.appendChild(pill);
-                    }
-                });
-                // Mettre à jour l'input caché pour la soumission du formulaire
-                hiddenInput.value = Array.from(selectedRoles).join(',');
-            };
-
-            const removeRole = (roleId) => {
-                selectedRoles.delete(roleId);
-                updateSelectedDisplay();
-                showSaveBar();
-            };
-
-            const addRole = (roleId) => {
-                const role = allServerRoles.find(r => r.id === roleId);
-                // Vérifier si le rôle existe et si le bot a la permission de le gérer
-                if (!role) {
-                    alert("Ce rôle n'existe plus ou n'est pas disponible.");
-                    return;
-                }
-                if (!role.canManage) {
-                    alert("Le bot n'a pas les permissions pour gérer ce rôle.");
-                    return;
-                }
-                selectedRoles.add(roleId);
-                updateSelectedDisplay();
-                searchInput.value = ''; // Effacer l'input de recherche après sélection
-                resultsContainer.classList.remove('visible'); // Cacher les résultats de recherche
-                showSaveBar();
-            };
-
-            const showResults = () => {
-                const searchTerm = searchInput.value.toLowerCase();
-                // Filtrer les rôles déjà sélectionnés et ceux qui ne correspondent pas à la recherche
-                const filteredRoles = allServerRoles.filter(role => 
-                    !selectedRoles.has(role.id) && role.name.toLowerCase().includes(searchTerm)
-                );
-                
-                resultsContainer.innerHTML = '';
-                
-                // Afficher tous les rôles non sélectionnés si la barre de recherche est vide, sinon les filtrés
-                const rolesToShow = searchTerm ? filteredRoles : allServerRoles.filter(role => !selectedRoles.has(role.id));
-
-                if (rolesToShow.length === 0) {
-                    resultsContainer.innerHTML = '<div class="result-item disabled">Aucun rôle trouvé</div>';
-                } else {
-                    rolesToShow.forEach(role => {
-                        const item = document.createElement('div');
-                        item.className = 'result-item';
-                        if (!role.canManage) {
-                            item.classList.add('disabled');
-                            item.title = "Le bot ne peut pas gérer ce rôle. Assurez-vous que son rôle est plus élevé.";
-                        } else {
-                           item.onclick = () => addRole(role.id);
-                        }
-                        
-                        const colorSpan = document.createElement('span');
-                        colorSpan.className = 'role-pill-color';
-                        colorSpan.style.backgroundColor = role.color || '#99AAB5'; // Couleur par défaut
-                        item.appendChild(colorSpan);
-                        item.append(role.name);
-                        resultsContainer.appendChild(item);
-                    });
-                }
-                resultsContainer.classList.add('visible');
-            };
-
-            searchInput.addEventListener('input', showResults);
-            searchInput.addEventListener('focus', showResults);
-            // Cacher les résultats si on clique en dehors du sélecteur
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.role-selector-wrapper')) {
-                    resultsContainer.classList.remove('visible');
-                }
-            });
-            updateSelectedDisplay(); // Appeler au chargement pour afficher les rôles déjà sélectionnés
+            // --- LOGIQUE SÉLECTEUR DE RÔLE (Toutes les fonctions liées sont supprimées) ---
+            // Supprimé : searchInput, resultsContainer, selectedContainer, hiddenInput, selectorWrapper
+            // Supprimé : updateSelectedDisplay, removeRole, addRole, showResults, et leurs eventListeners
 
             // --- LOGIQUE DE SAUVEGARDE ---
             const saveButton = document.getElementById('save-button');
@@ -398,27 +252,31 @@
                         const formName = form.getAttribute('data-form-name');
                         if (!formName) return;
                         let formData = {};
+                        // Seul le formulaire 'welcome' est pertinent maintenant
                         if (formName === 'welcome') {
-                            // S'assurer que les valeurs sont toujours présentes, même si vides
                             formData = {
                                 enabled: form.querySelector('[name=welcomeEnabled]')?.checked || false,
                                 channelId: form.querySelector('[name=welcomeChannelId]')?.value || '',
                                 message: form.querySelector('[name=welcomeMessage]')?.value || '',
                                 bannerUrl: form.querySelector('[name=welcomeBannerUrl]')?.value || null,
                             };
-                        } else if (formName === 'autorole') {
-                            formData = {
-                                enabled: form.querySelector('[name=autoroleEnabled]')?.checked || false,
-                                // Envoyer directement le Set de rôles converti en tableau pour le backend
-                                roles: Array.from(selectedRoles) 
-                            };
+                            promises.push(fetch(`/api/settings/${guildId}/${formName}`, { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify(formData) 
+                            }));
                         }
-                        promises.push(fetch(`/api/settings/${guildId}/${formName}`, { 
-                            method: 'POST', 
-                            headers: { 'Content-Type': 'application/json' }, 
-                            body: JSON.stringify(formData) 
-                        }));
+                        // Le formulaire 'autorole' est ignoré
                     });
+
+                    if (promises.length === 0) {
+                        document.getElementById('save-status').textContent = 'Aucun paramètre à enregistrer.';
+                        if(saveBar) setTimeout(() => saveBar.classList.remove('visible'), 2000);
+                        saveButton.disabled = false;
+                        saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+                        return;
+                    }
+
                     try {
                         const responses = await Promise.all(promises);
                         let allSuccess = true;
@@ -437,7 +295,6 @@
                     } catch (error) {
                         document.getElementById('save-status').textContent = 'Une erreur est survenue lors de l\'enregistrement.';
                         console.error("Erreur de sauvegarde:", error);
-                        // Afficher une alerte plus conviviale à l'utilisateur
                         alert("Erreur lors de l'enregistrement des paramètres : " + error.message);
                     } finally {
                         setTimeout(() => {
@@ -458,10 +315,9 @@
                 bannerInput.addEventListener('change', () => {
                     const file = bannerInput.files[0];
                     if (file) {
-                        // Vérifier la taille du fichier (ex: max 2MB)
                         if (file.size > 2 * 1024 * 1024) { // 2MB
                             alert("L'image est trop grande. La taille maximale est de 2 Mo.");
-                            bannerInput.value = ''; // Réinitialiser le champ de fichier
+                            bannerInput.value = '';
                             return;
                         }
 
@@ -481,7 +337,6 @@
                         };
                         reader.readAsDataURL(file);
                     } else {
-                        // Si aucun fichier n'est sélectionné ou si l'utilisateur annule
                         if (bannerPreviewImg) {
                             bannerPreviewImg.src = '';
                             bannerBase64Input.value = '';
