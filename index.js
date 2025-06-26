@@ -279,8 +279,45 @@ app.get('/payment-cancel', (req, res) => {
 });
 
 // --- ROUTES API DIVERSES ---
-app.post('/api/settings/:guildId/welcome', async (req, res) => { /* Votre logique ici */ });
-app.post('/api/settings/:guildId/autorole', async (req, res) => { /* Votre logique ici */ });
+app.post('/api/settings/:guildId/welcome', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Non authentifié' });
+    try {
+        const { enabled, channelId, message, bannerUrl } = req.body;
+        await db.collection('settings').updateOne(
+            { guildId: req.params.guildId },
+            { $set: { 
+                'welcome.enabled': enabled,
+                'welcome.channelId': channelId,
+                'welcome.message': message,
+                'welcome.bannerUrl': bannerUrl
+            }},
+            { upsert: true }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Erreur de sauvegarde des paramètres de bienvenue:", error);
+        res.status(500).json({ success: false, message: 'Erreur serveur' });
+    }
+});
+
+app.post('/api/settings/:guildId/autorole', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Non authentifié' });
+    try {
+        const { enabled, roles } = req.body;
+        await db.collection('settings').updateOne(
+            { guildId: req.params.guildId },
+            { $set: { 
+                'autorole.enabled': enabled,
+                'autorole.roles': roles 
+            }},
+            { upsert: true }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Erreur de sauvegarde des paramètres d'autorole:", error);
+        res.status(500).json({ success: false, message: 'Erreur serveur' });
+    }
+});
 
 app.post('/api/claim-trial-vip', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Non authentifié' });

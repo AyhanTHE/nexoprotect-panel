@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion de <%= typeof guild !== 'undefined' ? guild.name : 'Serveur' %></title>
+    <!-- Assurez-vous que le chemin vers ce CSS est correct -->
     <link rel="stylesheet" href="/css/manage.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,39 +64,37 @@
                     <details class="module-accordion" open>
                         <summary class="module-summary">
                             <div class="summary-title"><i class="fas fa-hand-sparkles"></i><h3>Messages de Bienvenue</h3></div>
-                            <label class="switch"><input type="checkbox" name="welcomeEnabled" <%= (typeof settings !== 'undefined' && settings.welcome && settings.welcome.enabled) ? 'checked' : '' %>><span class="slider round"></span></label>
+                            <label class="switch"><input type="checkbox" name="welcomeEnabled" <%= (settings.welcome && settings.welcome.enabled) ? 'checked' : '' %>><span class="slider round"></span></label>
                         </summary>
                         <div class="module-content">
                              <div class="settings-grid">
-                                <div class="settings-column">
-                                    <label for="welcome-channel">Salon des messages de bienvenue</label>
-                                    <select id="welcome-channel" name="welcomeChannelId" class="select-box">
-                                        <option value="">Désactivé</option>
-                                        <% if (typeof channels !== 'undefined' && Array.isArray(channels)) { %>
-                                            <% channels.forEach(channel => { %>
-                                                <option value="<%= channel.id %>" <%= (typeof settings !== 'undefined' && settings.welcome && settings.welcome.channelId === channel.id) ? 'selected' : '' %>>#<%= channel.name %></option>
-                                            <% }); %>
-                                        <% } %>
-                                    </select>
-                                    <label for="welcome-message">Message personnalisé</label>
-                                    <textarea id="welcome-message" name="welcomeMessage" class="textarea-box" placeholder="Ex: Bienvenue {user.username} !"><%= (typeof settings !== 'undefined' && settings.welcome) ? settings.welcome.message : '' %></textarea>
-                                    <label>Bannière de bienvenue</label>
-                                    <% if (typeof user !== 'undefined' && user.grade === 'VIP') { %>
-                                        <div class="setting-vip-upload">
-                                            <input type="file" id="banner-upload-input" accept="image/png, image/jpeg, image/gif" style="display: none;">
-                                            <input type="hidden" name="welcomeBannerUrl" id="banner-base64-input" value="<%= (typeof settings !== 'undefined' && settings.welcome) ? settings.welcome.bannerUrl : '' %>">
-                                            <button type="button" class="btn-upload" onclick="document.getElementById('banner-upload-input').click()"><i class="fas fa-upload"></i> Importer une image</button>
-                                            <div id="banner-preview" class="<%= (typeof settings !== 'undefined' && settings.welcome && settings.welcome.bannerUrl) ? '' : 'hidden' %>"><img src="<%= (typeof settings !== 'undefined' && settings.welcome) ? settings.welcome.bannerUrl : '' %>" alt="Aperçu de la bannière"></div>
-                                        </div>
-                                    <% } else { %>
-                                        <div class="setting-locked"><p>Cette fonctionnalité est réservée aux membres VIP.</p><button type="button" class="btn-vip-upgrade"><i class="fas fa-star"></i> Devenir VIP</button></div>
-                                    <% } %>
-                                </div>
-                                <div class="preview-column">
-                                     <label>Prévisualisation</label>
-                                     <div class="discord-preview"><div class="discord-message"><img src="https://cdn.discordapp.com/embed/avatars/1.png" class="discord-avatar" alt="avatar"><div class="discord-message-content"><div class="discord-user-info"><span class="discord-username">NexoProtect</span><span class="discord-bot-tag">APP</span></div><div class="discord-text"><p>Ho ! Un nouveau membre !</p><p>✨ Bienvenue, <%= (typeof user !== 'undefined' && user) ? user.username : 'Utilisateur' %> ! ✨</p></div></div></div></div>
-                                </div>
-                            </div>
+                                 <div class="settings-column">
+                                     <label for="welcome-channel">Salon des messages de bienvenue</label>
+                                     <select id="welcome-channel" name="welcomeChannelId" class="select-box">
+                                         <option value="">Désactivé</option>
+                                         <% channels.forEach(channel => { %>
+                                             <option value="<%= channel.id %>" <%= (settings.welcome && settings.welcome.channelId === channel.id) ? 'selected' : '' %>>#<%= channel.name %></option>
+                                         <% }); %>
+                                     </select>
+                                     <label for="welcome-message">Message personnalisé</label>
+                                     <textarea id="welcome-message" name="welcomeMessage" class="textarea-box" placeholder="Ex: Bienvenue {user.username} !"><%= settings.welcome ? settings.welcome.message : '' %></textarea>
+                                     <label>Bannière de bienvenue</label>
+                                     <% if (user.grade === 'VIP') { %>
+                                         <div class="setting-vip-upload">
+                                             <input type="file" id="banner-upload-input" accept="image/png, image/jpeg, image/gif" style="display: none;">
+                                             <input type="hidden" name="welcomeBannerUrl" id="banner-base64-input" value="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>">
+                                             <button type="button" class="btn-upload" onclick="document.getElementById('banner-upload-input').click()"><i class="fas fa-upload"></i> Importer une image</button>
+                                             <div id="banner-preview" class="<%= (settings.welcome && settings.welcome.bannerUrl) ? '' : 'hidden' %>"><img src="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>" alt="Aperçu de la bannière"></div>
+                                         </div>
+                                     <% } else { %>
+                                         <div class="setting-locked"><p>Cette fonctionnalité est réservée aux membres VIP.</p><button type="button" class="btn-vip-upgrade"><i class="fas fa-star"></i> Devenir VIP</button></div>
+                                     <% } %>
+                                 </div>
+                                 <div class="preview-column">
+                                      <label>Prévisualisation</label>
+                                      <div class="discord-preview"><div class="discord-message"><img src="https://cdn.discordapp.com/embed/avatars/1.png" class="discord-avatar" alt="avatar"><div class="discord-message-content"><div class="discord-user-info"><span class="discord-username">NexoProtect</span><span class="discord-bot-tag">APP</span></div><div class="discord-text"><p>Ho ! Un nouveau membre !</p><p>✨ Bienvenue, <%= user.username %> ! ✨</p></div></div></div></div>
+                                 </div>
+                             </div>
                         </div>
                     </details>
                 </form>
@@ -108,28 +107,20 @@
                     <div class="settings-box">
                         <div class="box-header">
                             <h3>Rôles à l'arrivée</h3>
-                            <label class="switch"><input type="checkbox" name="autoroleEnabled" <%= (typeof settings !== 'undefined' && settings.autorole && settings.autorole.enabled) ? 'checked' : '' %>><span class="slider round"></span></label>
+                            <label class="switch"><input type="checkbox" name="autoroleEnabled" <%= (settings.autorole && settings.autorole.enabled) ? 'checked' : '' %>><span class="slider round"></span></label>
                         </div>
                         <p class="box-description">Attribuez un ou plusieurs rôles aux membres dès leur arrivée.</p>
                         <div class="role-selector-container">
-                             <% if (typeof roles !== 'undefined' && Array.isArray(roles)) { %>
-                                <% if (roles.length > 0) { %>
-                                    <% roles.forEach(role => { %>
-                                        <div class="role-item <%= (typeof settings !== 'undefined' && settings.autorole && settings.autorole.roles && settings.autorole.roles.includes(role.id)) ? 'selected' : '' %>" data-role-id="<%= role.id %>">
-                                            <%= role.name %>
-                                            <% if (!role.canManage) { %>
-                                                <span class="permission-denied-icon" title="Le bot n'a pas la permission de gérer ce rôle."><i class="fas fa-exclamation-triangle"></i></span>
-                                            <% } %>
-                                        </div>
-                                    <% }); %>
-                                <% } else { %>
-                                    <p class="error-message">Aucun rôle à afficher. Le bot a-t-il la permission de voir les rôles ?</p>
-                                <% } %>
-                             <% } else { %>
-                                <p class="error-message">Erreur : Impossible de charger les rôles depuis le serveur.</p>
-                             <% } %>
+                             <% roles.forEach(role => { %>
+                                 <div class="role-item <%= (settings.autorole && settings.autorole.roles && settings.autorole.roles.includes(role.id)) ? 'selected' : '' %>" data-role-id="<%= role.id %>">
+                                     <%= role.name %>
+                                     <% if (!role.canManage) { %>
+                                         <span class="permission-denied-icon" title="Le bot n'a pas la permission de gérer ce rôle."><i class="fas fa-exclamation-triangle"></i></span>
+                                     <% } %>
+                                 </div>
+                             <% }); %>
                         </div>
-                        <input type="hidden" name="autoroleRoles" id="autorole-roles-input" value="<%= (typeof settings !== 'undefined' && settings.autorole && settings.autorole.roles) ? settings.autorole.roles.join(',') : '' %>">
+                        <input type="hidden" name="autoroleRoles" id="autorole-roles-input" value="<%= (settings.autorole && settings.autorole.roles) ? settings.autorole.roles.join(',') : '' %>">
                     </div>
                 </form>
             </div>
@@ -172,13 +163,39 @@
 
             // --- BARRE DE SAUVEGARDE ---
             const saveBar = document.getElementById('save-bar');
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('input', () => {
-                   if(saveBar) saveBar.classList.add('visible');
-                });
-            });
+            const showSaveBar = () => {
+                if(saveBar) {
+                    saveBar.classList.add('visible');
+                    document.getElementById('save-status').textContent = 'Des changements non sauvegardés.';
+                }
+            }
+            document.querySelectorAll('form').forEach(form => form.addEventListener('input', showSaveBar));
+            document.querySelectorAll('.role-item').forEach(item => item.addEventListener('click', showSaveBar));
+            
+            // --- LOGIQUE POUR AUTORÔLE (SÉLECTION MULTIPLE) ---
+            const roleContainer = document.querySelector('.role-selector-container');
+            if(roleContainer) {
+                const hiddenInput = document.getElementById('autorole-roles-input');
+                const selectedRoles = new Set(hiddenInput.value ? hiddenInput.value.split(',') : []);
 
-            // --- LOGIQUE DE SAUVEGARDE ---
+                roleContainer.addEventListener('click', (e) => {
+                    const roleItem = e.target.closest('.role-item');
+                    if (roleItem && !roleItem.querySelector('.permission-denied-icon')) {
+                        const roleId = roleItem.getAttribute('data-role-id');
+                        roleItem.classList.toggle('selected');
+                        
+                        if (selectedRoles.has(roleId)) {
+                            selectedRoles.delete(roleId);
+                        } else {
+                            selectedRoles.add(roleId);
+                        }
+                        hiddenInput.value = Array.from(selectedRoles).join(',');
+                        // L'événement 'input' est déjà géré par le listener de la barre de sauvegarde, pas besoin d'appeler showSaveBar() ici.
+                    }
+                });
+            }
+            
+            // --- LOGIQUE DE SAUVEGARDE AMÉLIORÉE ---
             const saveButton = document.getElementById('save-button');
             const saveStatus = document.getElementById('save-status');
             if(saveButton) {
@@ -189,7 +206,6 @@
                     const guildId = window.location.pathname.split('/').pop();
                     const promises = [];
 
-                    // Sauvegarde pour chaque formulaire
                     document.querySelectorAll('form').forEach(form => {
                         const formName = form.getAttribute('data-form-name');
                         if (!formName) return;
@@ -205,11 +221,11 @@
                         } else if (formName === 'autorole') {
                             formData = {
                                 enabled: form.querySelector('[name=autoroleEnabled]').checked,
-                                roles: form.querySelector('[name=autoroleRoles]').value.split(',').filter(Boolean)
+                                // Envoie un tableau de rôles
+                                roles: form.querySelector('[name=autoroleRoles]').value.split(',').filter(Boolean) 
                             };
                         }
-                        // Ajoutez d'autres `else if` pour les futurs formulaires
-
+                        
                         promises.push(fetch(`/api/settings/${guildId}/${formName}`, { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/json' }, 
@@ -218,46 +234,35 @@
                     });
                     
                     try {
-                        await Promise.all(promises);
+                        // Attendre que toutes les sauvegardes soient terminées
+                        const responses = await Promise.all(promises);
+                        // Vérifier si toutes les réponses sont OK
+                        for (const res of responses) {
+                            if (!res.ok) throw new Error(`Échec d'une sauvegarde: ${res.statusText}`);
+                        }
+
                         saveStatus.textContent = 'Changements enregistrés !';
-                        if(saveBar) saveBar.classList.remove('visible');
+                        if(saveBar) setTimeout(() => saveBar.classList.remove('visible'), 2000);
+
                     } catch (error) {
                         saveStatus.textContent = 'Une erreur est survenue.';
                         console.error("Save error:", error);
                     } finally {
-                        saveButton.disabled = false;
-                        saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
-                    }
-                });
-            }
-
-            // --- LOGIQUE POUR AUTORÔLE ---
-            const roleContainer = document.querySelector('.role-selector-container');
-            if(roleContainer) {
-                const hiddenInput = document.getElementById('autorole-roles-input');
-                const selectedRoles = new Set(hiddenInput.value ? hiddenInput.value.split(',') : []);
-                roleContainer.addEventListener('click', (e) => {
-                    const roleItem = e.target.closest('.role-item');
-                    if (roleItem && !roleItem.querySelector('.permission-denied-icon')) {
-                        const roleId = roleItem.getAttribute('data-role-id');
-                        roleItem.classList.toggle('selected');
-                        if (selectedRoles.has(roleId)) {
-                            selectedRoles.delete(roleId);
-                        } else {
-                            selectedRoles.add(roleId);
-                        }
-                        hiddenInput.value = Array.from(selectedRoles).join(',');
-                        if(saveBar) saveBar.classList.add('visible');
+                        // Réactiver le bouton après une courte pause, même en cas d'erreur
+                        setTimeout(() => {
+                            saveButton.disabled = false;
+                            saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+                        }, 2500);
                     }
                 });
             }
 
             // --- LOGIQUE POUR L'IMPORT D'IMAGE ---
             const bannerInput = document.getElementById('banner-upload-input');
-            const bannerBase64Input = document.getElementById('banner-base64-input');
-            const bannerPreviewContainer = document.getElementById('banner-preview');
-            const bannerPreviewImg = bannerPreviewContainer ? bannerPreviewContainer.querySelector('img') : null;
             if (bannerInput) {
+                const bannerBase64Input = document.getElementById('banner-base64-input');
+                const bannerPreviewContainer = document.getElementById('banner-preview');
+                const bannerPreviewImg = bannerPreviewContainer.querySelector('img');
                 bannerInput.addEventListener('change', () => {
                     const file = bannerInput.files[0];
                     if (file && bannerPreviewImg) {
@@ -267,7 +272,7 @@
                             bannerPreviewImg.src = base64String;
                             bannerBase64Input.value = base64String;
                             bannerPreviewContainer.classList.remove('hidden');
-                            if(saveBar) saveBar.classList.add('visible');
+                            showSaveBar();
                         };
                         reader.readAsDataURL(file);
                     }
