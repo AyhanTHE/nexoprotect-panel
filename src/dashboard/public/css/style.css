@@ -1,26 +1,27 @@
 /* ===================================================================
 //
-//   FEUILLE DE STYLE PRINCIPALE - NexoProtect Landing Page
+//   FEUILLE DE STYLE - Refonte NexoProtect 2025
+//   Style : Sombre, Professionnel, Néon
 //
 // ================================================================ */
 
-/* --- Importation de la police de caractères --- */
+/* --- Importations des polices --- */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap'); /* Police pour les titres si besoin */
+@import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
 
-/* --- Variables de couleur et de style (Palette) --- */
+/* --- Variables de couleurs (Palette Néon) --- */
 :root {
-    --bg-dark: #10101a;       /* Fond principal très sombre */
-    --bg-light: #181825;      /* Fond secondaire un peu plus clair */
-    --border-color: #2a2a4a;   /* Couleur des bordures */
-    --text-primary: #e0e0e0;   /* Couleur du texte principal */
-    --text-secondary: #a0a0b0; /* Couleur du texte secondaire/paragraphes */
-    --text-white: #ffffff;    /* Blanc pur pour les titres importants */
-    --accent-blue: #6a5af9;    /* Couleur d'accentuation principale */
-    --accent-blue-hover: #8174ff; /* Couleur d'accentuation au survol */
+    --bg-primary: #0a0a14;
+    --bg-secondary: #10101e;
+    --border-color: #2a2a4a;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --accent-color: #7f5af0;
+    --accent-glow: rgba(127, 90, 240, 0.5);
+    --highlight-color: #2cb67d; /* Vert néon pour les contrastes */
 }
 
-/* --- Styles Généraux & Reset --- */
+/* --- Styles de base --- */
 * {
     margin: 0;
     padding: 0;
@@ -28,15 +29,15 @@
 }
 
 html {
-    scroll-behavior: smooth; /* Permet un défilement fluide lors du clic sur les ancres */
+    scroll-behavior: smooth;
 }
 
 body {
-    background-color: var(--bg-dark);
+    background-color: var(--bg-primary);
     color: var(--text-primary);
     font-family: 'Poppins', sans-serif;
     line-height: 1.7;
-    overflow-x: hidden; /* Empêche le défilement horizontal */
+    overflow-x: hidden;
 }
 
 .container {
@@ -46,17 +47,15 @@ body {
 }
 
 section {
-    padding: 6rem 0; /* Espace vertical pour chaque section */
+    padding: 100px 0;
+    position: relative;
 }
 
-/* ===================================================================
-//  HEADER & BARRE DE NAVIGATION
-// ================================================================ */
-
+/* --- Barre de Navigation --- */
 .navbar {
-    background-color: rgba(24, 24, 37, 0.8); /* Fond semi-transparent */
-    backdrop-filter: blur(10px); /* Effet de flou derrière la barre */
     padding: 1rem 0;
+    background-color: rgba(10, 10, 20, 0.7);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
     position: sticky;
     top: 0;
@@ -73,161 +72,137 @@ section {
     display: flex;
     align-items: center;
     text-decoration: none;
-    color: var(--text-white);
-    font-weight: 700;
-    font-size: 1.5rem;
-}
-
-.logo-text {
-    font-family: 'Russo One', sans-serif; /* Police distinctive pour le logo */
-    transition: text-shadow 0.3s ease;
+    gap: 0.8rem;
 }
 
 .logo img {
-    width: 40px;
-    height: 40px;
-    margin-right: 10px;
-    transition: filter 0.3s ease;
-}
-
-.logo:hover .logo-text {
-    text-shadow: 0 0 10px var(--accent-blue-hover);
+    width: 45px;
+    height: 45px;
+    transition: transform 0.4s ease;
 }
 
 .logo:hover img {
-    filter: drop-shadow(0 0 8px var(--accent-blue));
+    transform: rotate(15deg) scale(1.1);
 }
 
-.navbar nav {
+.logo-text {
+    font-family: 'Russo One', sans-serif;
+    font-size: 1.8rem;
+    color: #fff;
+    text-shadow: 0 0 5px var(--accent-glow);
+}
+
+.main-nav {
     display: flex;
     align-items: center;
-    gap: 1.8rem; /* Espace entre les liens */
+    gap: 1.5rem;
 }
 
 .nav-link {
     color: var(--text-secondary);
     text-decoration: none;
-    transition: color 0.3s ease;
-    position: relative;
-    padding-bottom: 8px;
-    font-size: 1rem;
     font-weight: 500;
+    position: relative;
+    padding: 5px 0;
+    transition: color 0.3s ease;
 }
 
-.nav-link::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 2px;
-    background-color: var(--accent-blue-hover);
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    transition: width 0.3s ease-in-out;
+.nav-link:hover {
+    color: #fff;
+    text-shadow: 0 0 8px var(--accent-glow);
 }
 
-.nav-link:hover, .nav-link.active {
-    color: var(--text-white);
-}
-
-.nav-link:hover::after, .nav-link.active::after {
-    width: 100%;
-}
-
-/* ===================================================================
-//  BOUTONS
-// ================================================================ */
-
+/* --- Boutons avec effet néon --- */
 .btn {
-    padding: 10px 22px;
+    padding: 12px 28px;
     border-radius: 8px;
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s ease;
-    border: 1px solid transparent;
+    border: none;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
     cursor: pointer;
 }
 
 .btn-primary {
-    background-color: var(--accent-blue);
-    color: var(--text-white);
+    background-color: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 0 15px var(--accent-glow);
 }
 
 .btn-primary:hover {
-    background-color: var(--accent-blue-hover);
-    box-shadow: 0 0 20px rgba(31, 111, 235, 0.5);
-    transform: translateY(-3px);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 0 25px var(--accent-glow), 0 0 40px rgba(127, 90, 240, 0.4);
 }
 
 .btn-secondary {
     background-color: transparent;
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-    background-color: var(--bg-light);
-    border-color: var(--accent-blue-hover);
-    color: var(--text-white);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    box-shadow: 0 0 15px var(--accent-glow);
 }
 
-/* ===================================================================
-//  SECTIONS DE CONTENU
-// ================================================================ */
-
-h2 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--text-white);
+/* --- Titres de section --- */
+.section-title {
+    font-family: 'Russo One', sans-serif;
+    font-size: 2.8rem;
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    color: #fff;
 }
 
 .section-subtitle {
     text-align: center;
     color: var(--text-secondary);
-    margin: -1rem auto 4rem;
     max-width: 600px;
+    margin: 0 auto 4rem auto;
 }
 
 /* --- Section Héros --- */
 .hero {
-    padding: 6rem 0;
-    text-align: center;
+    padding: 8rem 0;
+    overflow: hidden;
 }
 
 .hero-content {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     gap: 3rem;
-    text-align: left;
 }
 
 .hero-text h1 {
-    font-size: 3.2rem;
-    font-weight: 700;
-    line-height: 1.2;
+    font-family: 'Russo One', sans-serif;
+    font-size: 4rem;
+    line-height: 1.1;
     margin-bottom: 1.5rem;
+}
+
+.hero-text .highlight {
+    color: var(--accent-color);
+    text-shadow: 0 0 15px var(--accent-glow);
 }
 
 .hero-text p {
     font-size: 1.1rem;
     color: var(--text-secondary);
     margin-bottom: 2.5rem;
-    max-width: 550px;
 }
 
 .hero-image {
-    flex-shrink: 0;
+    animation: float 6s ease-in-out infinite;
 }
 
 .hero-logo-main {
-    width: 280px;
-    animation: float 6s ease-in-out infinite;
+    width: 300px;
+    filter: drop-shadow(0 0 25px var(--accent-glow));
 }
 
 @keyframes float {
@@ -235,10 +210,47 @@ h2 {
     50% { transform: translateY(-20px); }
 }
 
+/* --- Section Statistiques --- */
+.stats {
+    padding: 4rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.stats-content {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-icon {
+    font-size: 2.2rem;
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.stat-number {
+    font-family: 'Russo One', sans-serif;
+    font-size: 3.5rem;
+    color: #fff;
+    margin: 0;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 /* --- Section Fonctionnalités --- */
 .features {
-    background-color: var(--bg-light);
-    border-top: 1px solid var(--border-color);
+    background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
 }
 
 .features-grid {
@@ -248,93 +260,91 @@ h2 {
 }
 
 .feature-card {
-    background-color: var(--bg-dark);
-    padding: 2.5rem 2rem;
-    border-radius: 12px;
-    text-align: center;
+    background: linear-gradient(145deg, var(--bg-secondary), var(--bg-primary));
+    padding: 2.5rem;
     border: 1px solid var(--border-color);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.feature-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.feature-icon {
-    font-size: 2rem;
-    color: var(--accent-blue);
-    background-color: rgba(31, 111, 235, 0.1);
-    padding: 15px;
     border-radius: 12px;
-    margin-bottom: 1.5rem;
-    display: inline-block;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(transparent, var(--accent-glow), transparent 30%);
+    transform-origin: center;
+    animation: rotate 6s linear infinite;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.feature-card:hover::before {
+    opacity: 1;
+}
+
+.feature-card > * {
+    position: relative;
+    z-index: 2;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .feature-card h3 {
     font-size: 1.5rem;
+    color: #fff;
     margin-bottom: 1rem;
-    color: var(--text-white);
 }
 
-.feature-card p {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-}
-
-/* --- Section Équipe --- */
-/* CORRECTION : Centrage du sous-titre */
-.team-subtitle {
-    text-align: center;
+/* --- Sections Équipe & Blacklist --- */
+.team {
+    padding-bottom: 0;
 }
 
 .team-grid {
     display: flex;
     justify-content: center;
-    gap: 2rem;
-    flex-wrap: wrap; /* Permet de passer à la ligne sur petits écrans */
 }
 
 .team-member-card {
-    background-color: var(--bg-light);
-    padding: 2rem;
-    border-radius: 12px;
     text-align: center;
-    border: 1px solid var(--border-color);
-    width: 280px;
 }
 
 .team-pfp {
-    width: 120px;
-    height: 120px;
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
-    border: 4px solid var(--accent-blue);
-    object-fit: cover;
-    margin-bottom: 1.5rem;
+    border: 4px solid var(--accent-color);
+    box-shadow: 0 0 20px var(--accent-glow);
+    margin-bottom: 1rem;
 }
 
 .team-member-card h3 {
-    margin: 0.5rem 0;
     font-size: 1.5rem;
-    color: var(--text-white);
+    color: #fff;
 }
 
 .team-role {
-    color: var(--text-secondary);
-    font-size: 1rem;
-    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+    font-weight: 600;
+    margin-bottom: 1rem;
 }
 
 .team-status {
-    background-color: #238636;
-    color: white;
+    background: var(--highlight-color);
+    color: #fff;
     padding: 6px 14px;
-    border-radius: 16px;
-    font-size: 0.9rem;
+    border-radius: 20px;
     font-weight: 600;
 }
 
-/* --- Section Blacklist --- */
 .blacklist {
     border-top: 1px solid var(--border-color);
 }
@@ -342,128 +352,45 @@ h2 {
 .blacklist-content {
     display: flex;
     align-items: center;
-    gap: 4rem;
+    gap: 5rem;
 }
 
-.blacklist-icon-container {
-    position: relative;
-    flex-shrink: 0;
-}
+.blacklist-text { flex-basis: 60%; }
+.blacklist-image { flex-basis: 40%; text-align: center; }
 
-.blacklist-icon-main {
-    font-size: 10rem;
-    color: var(--bg-light);
+.blacklist-image .fa-user-slash {
+    font-size: 12rem;
+    color: var(--bg-secondary);
+    text-shadow: 0 0 30px rgba(200, 50, 50, 0.5);
+    transform: rotate(-10deg);
 }
-
-.blacklist-icon-secondary {
-    position: absolute;
-    bottom: 0px;
-    right: -10px;
-    font-size: 4rem;
-    color: #c93c3c;
-}
-
-.blacklist-text {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    color: var(--text-secondary);
-}
-
-/* --- Section Statistiques (CORRIGÉE) --- */
-.stats {
-    background-color: var(--bg-light);
-    padding: 5rem 0;
-    border-top: 1px solid var(--border-color);
-}
-
-/* CORRECTION : Utilisation de grid pour un alignement parfait */
-.stats-content {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-}
-
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Centre horizontalement */
-    justify-content: center; /* Centre verticalement */
-    text-align: center; /* Assure que le texte est centré */
-    padding: 2rem;
-}
-
-.stat-item .stat-icon {
-    font-size: 2.5rem;
-    color: var(--accent-blue-hover);
-    margin-bottom: 1.5rem;
-}
-
-.stat-item .stat-number {
-    font-family: 'Russo One', sans-serif;
-    font-size: 3rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text-white);
-}
-
-.stat-item .stat-label {
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin: 0.5rem 0 0 0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-secondary);
-}
-
 
 /* --- Section Appel à l'Action (CTA) --- */
 .cta {
-    padding: 5rem 0;
     text-align: center;
 }
 
 /* --- Pied de Page --- */
 .footer {
-    background-color: var(--bg-light);
-    text-align: center;
     padding: 2rem 0;
-    border-top: 1px solid var(--border-color);
+    text-align: center;
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
 }
 
 /* --- Responsive Design --- */
 @media (max-width: 992px) {
-    .navbar nav {
-        display: none; /* Menu burger à implémenter */
-    }
-    .navbar .container {
-        justify-content: center;
-    }
-    .stats-content {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .hero-content, .blacklist-content {
-        flex-direction: column;
-    }
-    .hero-text, .blacklist-text {
-        order: 2;
-        text-align: center;
-    }
-    .hero-image, .blacklist-icon-container {
-        order: 1;
-        margin-bottom: 2rem;
-    }
-    .hero-logo-main { width: 200px; }
-    .hero-text h1 { font-size: 2.5rem; }
+    .navbar nav { display: none; }
+    .navbar .container { justify-content: center; }
+    .hero-content { flex-direction: column; text-align: center; }
+    .hero-text { max-width: 100%; order: 2; }
+    .hero-image { order: 1; }
+    .stats-content { grid-template-columns: repeat(2, 1fr); }
+    .blacklist-content { flex-direction: column; }
 }
 
 @media (max-width: 576px) {
-    .stats-content {
-        grid-template-columns: 1fr;
-    }
+    .hero-text h1 { font-size: 2.8rem; }
+    .stats-content { grid-template-columns: 1fr; }
 }
