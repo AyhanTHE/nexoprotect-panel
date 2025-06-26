@@ -193,11 +193,55 @@ body {
     font-size: 1.1rem;
 }
 
+/* === AJOUT : Barre de recherche === */
+.server-search-container {
+    position: relative;
+    margin: 2rem 0 1rem 0;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+#server-search {
+    width: 100%;
+    padding: 0.8rem 1rem 0.8rem 40px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: var(--font-family);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+#server-search:focus {
+    outline: none;
+    border-color: var(--primary-accent);
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+#server-search::placeholder {
+    color: var(--text-secondary);
+}
+
 /* --- Cartes des Serveurs --- */
 .server-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+/* AJOUT : Message pour aucun résultat de recherche */
+.no-servers {
+    color: var(--text-secondary);
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 1.1rem;
     margin-top: 2rem;
 }
 
@@ -208,10 +252,32 @@ body {
     overflow: hidden;
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
+/* MODIFICATION : Effet néon plus prononcé */
 .server-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    box-shadow: 0 0 25px var(--primary-glow);
+}
+
+
+/* AJOUT : Style pour le badge premium du serveur */
+.server-premium-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    background-color: var(--vip-gold);
+    color: #000;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    box-shadow: 0 0 15px var(--vip-glow);
 }
 
 .card-background {
@@ -229,20 +295,33 @@ body {
     z-index: 2;
     padding: 1.5rem;
     text-align: center;
+    flex-grow: 1;
 }
 
 .server-icon {
     width: 70px;
     height: 70px;
     border-radius: 50%;
-    margin-bottom: 1rem;
+    margin: 0 auto 1rem auto;
     border: 2px solid #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.3);
 }
 
 .server-name {
     font-size: 1.2rem;
     font-weight: 600;
     color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+/* AJOUT : Style pour le compteur de membres */
+.server-members {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
 .card-footer {
@@ -250,16 +329,19 @@ body {
     z-index: 2;
     background-color: rgba(0,0,0,0.2);
     padding: 1rem;
+    margin-top: auto;
 }
 
 .btn-manage, .btn-invite {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     width: 90%;
     margin: 0 auto;
     padding: 0.7rem;
     border: none;
     border-radius: 8px;
-    text-align: center;
     text-decoration: none;
     font-weight: 600;
     color: #fff;
@@ -271,6 +353,7 @@ body {
 }
 .btn-manage:hover {
     box-shadow: 0 0 20px var(--primary-glow);
+    transform: scale(1.05);
 }
 
 .btn-invite {
@@ -278,6 +361,7 @@ body {
 }
 .btn-invite:hover {
     box-shadow: 0 0 20px rgba(88, 101, 242, 0.6);
+    transform: scale(1.05);
 }
 
 /* ================================== */
@@ -597,11 +681,55 @@ body {
     font-size: 1.1rem;
 }
 
+/* === AJOUT : Barre de recherche === */
+.server-search-container {
+    position: relative;
+    margin: 2rem 0 1rem 0;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+#server-search {
+    width: 100%;
+    padding: 0.8rem 1rem 0.8rem 40px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: var(--font-family);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+#server-search:focus {
+    outline: none;
+    border-color: var(--primary-accent);
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+#server-search::placeholder {
+    color: var(--text-secondary);
+}
+
 /* --- Cartes des Serveurs --- */
 .server-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+/* AJOUT : Message pour aucun résultat de recherche */
+.no-servers {
+    color: var(--text-secondary);
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 1.1rem;
     margin-top: 2rem;
 }
 
@@ -612,10 +740,31 @@ body {
     overflow: hidden;
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
+/* MODIFICATION : Effet néon plus prononcé */
 .server-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    box-shadow: 0 0 25px var(--primary-glow);
+}
+
+/* AJOUT : Style pour le badge premium du serveur */
+.server-premium-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    background-color: var(--vip-gold);
+    color: #000;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    box-shadow: 0 0 15px var(--vip-glow);
 }
 
 .card-background {
@@ -633,20 +782,33 @@ body {
     z-index: 2;
     padding: 1.5rem;
     text-align: center;
+    flex-grow: 1;
 }
 
 .server-icon {
     width: 70px;
     height: 70px;
     border-radius: 50%;
-    margin-bottom: 1rem;
+    margin: 0 auto 1rem auto;
     border: 2px solid #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.3);
 }
 
 .server-name {
     font-size: 1.2rem;
     font-weight: 600;
     color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+/* AJOUT : Style pour le compteur de membres */
+.server-members {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
 .card-footer {
@@ -654,16 +816,19 @@ body {
     z-index: 2;
     background-color: rgba(0,0,0,0.2);
     padding: 1rem;
+    margin-top: auto;
 }
 
 .btn-manage, .btn-invite {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     width: 90%;
     margin: 0 auto;
     padding: 0.7rem;
     border: none;
     border-radius: 8px;
-    text-align: center;
     text-decoration: none;
     font-weight: 600;
     color: #fff;
@@ -675,6 +840,7 @@ body {
 }
 .btn-manage:hover {
     box-shadow: 0 0 20px var(--primary-glow);
+    transform: scale(1.05);
 }
 
 .btn-invite {
@@ -682,6 +848,7 @@ body {
 }
 .btn-invite:hover {
     box-shadow: 0 0 20px rgba(88, 101, 242, 0.6);
+    transform: scale(1.05);
 }
 
 /* ================================== */

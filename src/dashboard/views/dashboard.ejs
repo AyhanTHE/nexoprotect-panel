@@ -14,7 +14,6 @@
 
     <div class="dashboard-layout">
 
-        <!-- Menu latéral pour le profil -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="/" class="logo">
@@ -42,7 +41,6 @@
 
             <div class="sidebar-footer">
                 <% if (user) { %>
-                    <!-- CORRIGÉ : Le bouton s'affiche si l'utilisateur n'est pas VIP et n'a pas utilisé l'essai -->
                     <% if (user.grade !== 'VIP' && !user.usedTrial) { %>
                         <button id="claim-trial-btn" class="btn-vip">
                             <i class="fas fa-star"></i> 
@@ -62,24 +60,38 @@
             </div>
         </aside>
 
-        <!-- Contenu principal pour les serveurs -->
         <main class="main-content">
             <header class="main-header">
                 <h1>Mes Serveurs</h1>
                 <p>Sélectionnez un serveur pour commencer à le configurer.</p>
             </header>
+
+            <div class="server-search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="server-search" placeholder="Rechercher un serveur...">
+            </div>
             
             <div class="server-grid">
                 <% if (guilds.length === 0) { %>
                     <p class="no-servers">Aucun serveur administrable trouvé.</p>
                 <% } else { %>
                     <% guilds.forEach(guild => { %>
-                        <div class="server-card">
+                        <div class="server-card" data-name="<%= guild.name.toLowerCase() %>">
+                            <% if (guild.isPremium) { %>
+                                <div class="server-premium-badge">
+                                    <i class="fas fa-crown"></i> <span>Premium</span>
+                                </div>
+                            <% } %>
+
                             <% const iconUrl = guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=128` : '/images/default-icon.png'; %>
                             <div class="card-background" style="background-image: url('<%= iconUrl %>');"></div>
                             <div class="card-content">
                                 <img src="<%= iconUrl %>" alt="Icône" class="server-icon" onerror="this.src='/images/default-icon.png'">
                                 <h3 class="server-name"><%= guild.name %></h3>
+                                <div class="server-members">
+                                    <i class="fas fa-users"></i>
+                                    <span><%= guild.memberCount || 'N/A' %> membres</span>
+                                </div>
                             </div>
                             <div class="card-footer">
                                 <% if (guild.botOnServer) { %>
@@ -91,18 +103,19 @@
                         </div>
                     <% }); %>
                 <% } %>
+                <p id="no-server-found" class="no-servers" style="display: none;">Aucun serveur ne correspond à votre recherche.</p>
             </div>
         </main>
     </div>
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Script pour le bouton d'essai VIP
             const claimVipBtn = document.getElementById('claim-trial-btn');
             if (claimVipBtn) {
                 claimVipBtn.addEventListener('click', () => {
                     claimVipBtn.disabled = true;
                     claimVipBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Activation...';
-                    // CORRIGÉ : Appel de la bonne URL d'API
                     fetch('/api/claim-trial-vip', { method: 'POST' })
                         .then(res => res.json())
                         .then(data => {
@@ -115,6 +128,33 @@
                         });
                 });
             }
+
+            // NOUVEAU : Script pour la barre de recherche
+            const searchInput = document.getElementById('server-search');
+            const serverCards = document.querySelectorAll('.server-card');
+            const noResultMsg = document.getElementById('no-server-found');
+
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                let visibleCount = 0;
+
+                serverCards.forEach(card => {
+                    const serverName = card.getAttribute('data-name');
+                    if (serverName.includes(searchTerm)) {
+                        card.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Affiche un message si aucun serveur n'est trouvé
+                if (visibleCount === 0 && searchTerm !== '') {
+                    noResultMsg.style.display = 'block';
+                } else {
+                    noResultMsg.style.display = 'none';
+                }
+            });
         });
     </script>
 </body>
