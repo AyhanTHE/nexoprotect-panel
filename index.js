@@ -1,5 +1,5 @@
 // =================================================================
-//       INDEX.JS - CŒUR DE L'APPLICATION NEXOPROTECT
+//      INDEX.JS - CŒUR DE L'APPLICATION NEXOPROTECT
 // =================================================================
 // Ce fichier gère toutes les routes, la logique de session, la connexion
 // à la base de données et les interactions avec les API de Discord et PayPal.
@@ -57,14 +57,6 @@ const paypalClient = new paypalSDK.core.PayPalHttpClient(
     new Environment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
 );
 
-// --- Middleware pour passer l'URL de base pour les redirections PayPal ---
-// Cela rend votre application plus flexible pour les déploiements
-app.use((req, res, next) => {
-    // baseDomainUrl sera quelque chose comme 'https://votrebot.com' ou 'http://localhost:3000'
-    req.baseDomainUrl = `${req.protocol}://${req.get('host')}`;
-    next();
-});
-
 // =================================================================
 // --- ROUTES DE L'APPLICATION ---
 // =================================================================
@@ -78,9 +70,7 @@ app.get('/', async (req, res) => {
     try {
         // Sécurité : On s'assure que la connexion à la DB est bien établie
         if (!db) {
-            // Tenter de redémarrer le serveur ou gérer cette erreur plus gracieusement
-            console.error("ERREUR CRITIQUE: La connexion à la base de données n'est pas encore établie.");
-            return res.status(500).send("Erreur interne du serveur: Base de données non connectée.");
+            throw new Error("La connexion à la base de données n'est pas encore établie.");
         }
 
         // On récupère les statistiques en parallèle pour plus d'efficacité
@@ -129,47 +119,26 @@ app.get('/callback', async (req, res) => {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         });
         const tokenData = await tokenResponse.json();
-        // === MODIFICATION: Vérification plus robuste des erreurs de token ===
-        if (!tokenResponse.ok) {
-            console.error("Erreur Discord Token Exchange:", tokenData);
-            throw new Error(tokenData.error_description || 'Échec de l\'échange de token Discord.');
-        }
+        if (tokenData.error) throw new Error(tokenData.error_description);
 
         // On utilise le token pour récupérer les infos de l'utilisateur
         const userResponse = await fetch('https://discord.com/api/users/@me', { headers: { authorization: `Bearer ${tokenData.access_token}` } });
         const userData = await userResponse.json();
-        // === MODIFICATION: Vérification plus robuste des erreurs utilisateur ===
-        if (!userResponse.ok) {
-            console.error("Erreur Discord User Fetch:", userData);
-            throw new Error('Échec de la récupération des informations utilisateur Discord.');
-        }
 
         // On sauvegarde les infos dans la session
         req.session.accessToken = tokenData.access_token;
         req.session.user = userData;
-        // Utilisez req.session.save() avec un callback si vous redirigez immédiatement après
-        req.session.save(err => {
-            if (err) {
-                console.error("Erreur lors de la sauvegarde de la session:", err);
-                return res.status(500).send("Erreur lors de la sauvegarde de la session.");
-            }
-            res.redirect('/dashboard');
-        });
+        req.session.save(() => res.redirect('/dashboard'));
 
     } catch (error) {
         console.error("Erreur critique dans /callback:", error);
-        res.status(500).send('Une erreur interne est survenue lors de l\'authentification.');
+        res.status(500).send('Une erreur interne est survenue.');
     }
 });
 
 // --- Routes du Panel de Contrôle ---
 app.get('/dashboard', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
-    // === AJOUT: Assurez-vous que la DB est connectée ici aussi ===
-    if (!db) {
-        console.error("ERREUR: DB non connectée dans /dashboard");
-        return res.status(500).send("Erreur serveur: DB non connectée.");
-    }
     try {
         const premiumCollection = db.collection('premiumsubscriptions');
         const userDbInfo = await premiumCollection.findOne({ userId: req.session.user.id });
@@ -178,14 +147,7 @@ app.get('/dashboard', async (req, res) => {
 
         const guildsResponse = await fetch('https://discord.com/api/users/@me/guilds', { headers: { authorization: `Bearer ${req.session.accessToken}` } });
         const userGuilds = await guildsResponse.json();
-        // === MODIFICATION: Vérifier la réponse de l'API Discord ===
-        if (!guildsResponse.ok) {
-            console.error("Erreur Discord Guilds Fetch:", userGuilds);
-            throw new Error('Échec de la récupération des serveurs de l\'utilisateur.');
-        }
-
-        // === MODIFICATION: S'assurer que userGuilds est un tableau ===
-        const adminGuilds = Array.isArray(userGuilds) ? userGuilds.filter(g => (BigInt(g.permissions) & 8n) === 8n) : [];
+        const adminGuilds = userGuilds.filter(g => (BigInt(g.permissions) & 8n) === 8n);
 
         const botGuildsCollection = db.collection('botGuilds');
         const botGuilds = await botGuildsCollection.find({}, { projection: { guildId: 1 } }).toArray();
@@ -202,16 +164,9 @@ app.get('/dashboard', async (req, res) => {
 
 app.get('/manage/:guildId', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
-    // === AJOUT: Assurez-vous que la DB est connectée ici aussi ===
-    if (!db) {
-        console.error("ERREUR: DB non connectée dans /manage/:guildId");
-        return res.status(500).send("Erreur serveur: DB non connectée.");
-    }
     try {
         const discordApi = 'https://discord.com/api/v10';
         const botAuthHeader = { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` };
-
-        // === MODIFICATION: Récupération et vérification des réponses de l'API Discord ===
         const [guildResponse, channelsResponse, rolesResponse, botMemberResponse] = await Promise.all([
             fetch(`${discordApi}/guilds/${req.params.guildId}`, { headers: botAuthHeader }),
             fetch(`${discordApi}/guilds/${req.params.guildId}/channels`, { headers: botAuthHeader }),
@@ -219,23 +174,9 @@ app.get('/manage/:guildId', async (req, res) => {
             fetch(`${discordApi}/guilds/${req.params.guildId}/members/${process.env.CLIENT_ID}`, { headers: botAuthHeader })
         ]);
 
-        if (!guildResponse.ok) {
-            console.error(`Erreur Discord Guild Fetch pour ${req.params.guildId}:`, await guildResponse.text());
-            return res.status(404).send('Serveur introuvable ou le bot n\'est pas dessus.');
-        }
-        if (!channelsResponse.ok) {
-            console.error(`Erreur Discord Channels Fetch pour ${req.params.guildId}:`, await channelsResponse.text());
-            // Continuer mais avec un tableau vide pour channelsData
-        }
-        if (!rolesResponse.ok) {
-            console.error(`Erreur Discord Roles Fetch pour ${req.params.guildId}:`, await rolesResponse.text());
-            // Continuer mais avec un tableau vide pour rolesData
-        }
+        if (!guildResponse.ok) throw new Error('Impossible de récupérer les infos du serveur.');
 
-        const guildData = await guildResponse.json();
-        // === MODIFICATION: S'assurer que channelsData et rolesData sont des tableaux, même en cas d'échec de la requête ===
-        const channelsData = channelsResponse.ok ? await channelsResponse.json() : [];
-        const rolesData = rolesResponse.ok ? await rolesResponse.json() : [];
+        const [guildData, channelsData, rolesData] = await Promise.all([ guildResponse.json(), channelsResponse.json(), rolesResponse.json() ]);
         const botMember = botMemberResponse.ok ? await botMemberResponse.json() : null;
 
         const [userDbInfo, guildSettings] = await Promise.all([
@@ -245,72 +186,24 @@ app.get('/manage/:guildId', async (req, res) => {
         const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
         const user = { ...req.session.user, grade };
 
-        // === MODIFICATION: Filtrage des canaux texte plus robuste ===
-        const textChannels = Array.isArray(channelsData) ? channelsData.filter(c => c.type === 0 || c.type === 5) : []; // Type 0 = TEXT, Type 5 = ANNOUNCEMENT (important pour les salons de bienvenue)
-        
-        // === MODIFICATION: Calcul de la position du rôle le plus élevé du bot plus robuste ===
-        const botHighestRolePosition = (botMember && Array.isArray(botMember.roles) && Array.isArray(rolesData)) ? botMember.roles.reduce((maxPos, roleId) => {
+        const textChannels = Array.isArray(channelsData) ? channelsData.filter(c => c.type === 0) : [];
+        const botHighestRolePosition = (botMember && Array.isArray(botMember.roles)) ? botMember.roles.reduce((maxPos, roleId) => {
             const role = rolesData.find(r => r.id === roleId);
-            return role && role.position !== undefined && role.position > maxPos ? role.position : maxPos;
+            return role && role.position > maxPos ? role.position : maxPos;
         }, 0) : 0;
-        
-        // === MODIFICATION: Filtrage des rôles et ajout de canManage plus robuste ===
-        const roles = Array.isArray(rolesData) ? rolesData
-            .filter(role => role.name !== '@everyone' && !role.managed)
-            .map(role => ({ 
-                id: role.id, 
-                name: role.name, 
-                color: `#${(role.color || 0).toString(16).padStart(6, '0')}`, // Assurer une couleur valide
-                position: role.position, // Important pour le tri et la comparaison
-                canManage: role.position !== undefined && role.position < botHighestRolePosition 
-            }))
-            .sort((a, b) => b.position - a.position) // Trier les rôles pour la sélection
-            : [];
+        const roles = Array.isArray(rolesData) ? rolesData.filter(role => role.name !== '@everyone' && !role.managed).map(role => ({ ...role, canManage: role.position < botHighestRolePosition })) : [];
 
-        // === AJOUT: Initialisation des paramètres par défaut si non trouvés dans la DB ===
-        const settings = guildSettings || {
-            welcome: { enabled: false, channelId: '', message: '', bannerUrl: '' },
-            autorole: { enabled: false, roles: [] }
-        };
-
-        // === AJOUT: Assurez-vous que settings.autorole.roles est un tableau même si vide ou null de la DB ===
-        if (settings.autorole && !Array.isArray(settings.autorole.roles)) {
-            settings.autorole.roles = [];
-        }
-        // === AJOUT: Assurez-vous que settings.welcome est un objet même si vide ou null de la DB ===
-        if (!settings.welcome || typeof settings.welcome !== 'object') {
-            settings.welcome = { enabled: false, channelId: '', message: '', bannerUrl: '' };
-        }
-
-
-        // === POINT CRITIQUE DE DÉBOGAGE: AFFICHER LES DONNÉES ENVOYÉES AU TEMPLATE ===
-        console.log("--- Données envoyées à manage-server.ejs ---");
-        console.log("User:", { id: user.id, username: user.username, grade: user.grade });
-        console.log("Guild:", { id: guildData.id, name: guildData.name });
-        console.log("Channels Count:", textChannels.length);
-        console.log("Roles Count:", roles.length);
-        // === Loguez un exemple plus détaillé des rôles et paramètres si vous suspectez le contenu ===
-        // console.log("Sample Roles:", roles.slice(0, 5)); // Affiche les 5 premiers rôles
-        // console.log("Settings:", JSON.stringify(settings, null, 2)); // Afficher les paramètres formatés
-        console.log("------------------------------------------");
-
-
-        res.render('manage-server', { user, guild: guildData, channels: textChannels, roles, settings });
+        res.render('manage-server', { user, guild: guildData, channels: textChannels, roles, settings: guildSettings || {} });
 
     } catch (error) {
         console.error("Erreur de chargement de la page de gestion:", error);
-        res.status(500).send("Erreur lors du chargement de la page de gestion. Veuillez réessayer.");
+        res.status(500).send("Erreur lors du chargement de la page de gestion.");
     }
 });
 
 // --- Routes Premium & Paiement ---
 app.get('/premium', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
-    // === AJOUT: Assurez-vous que la DB est connectée ici aussi ===
-    if (!db) {
-        console.error("ERREUR: DB non connectée dans /premium");
-        return res.status(500).send("Erreur serveur: DB non connectée.");
-    }
     try {
         const premiumCollection = db.collection('premiumsubscriptions');
         const userDbInfo = await premiumCollection.findOne({ userId: req.session.user.id });
@@ -319,8 +212,7 @@ app.get('/premium', async (req, res) => {
         res.render('premium', { user: user, message: req.query.message || null, stats: null });
     } catch (error) {
         console.error("Erreur lors du chargement de la page premium:", error);
-        // Fallback plus robuste: s'assurer que user est au moins l'objet session.user
-        res.render('premium', { user: req.session.user || {}, message: req.query.message || null, stats: null });
+        res.render('premium', { user: req.session.user, message: req.query.message || null, stats: null });
     }
 });
 
@@ -337,9 +229,8 @@ app.post('/api/create-payment', async (req, res) => {
         }],
         application_context: {
             brand_name: 'NexoProtect',
-            // === MODIFICATION: Utilisation de req.baseDomainUrl pour les URL de retour ===
-            return_url: `${req.baseDomainUrl}/payment-success`, 
-            cancel_url: `${req.baseDomainUrl}/payment-cancel`,
+            return_url: `${process.env.REDIRECT_URI.replace('/callback', '')}/payment-success`,
+            cancel_url: `${process.env.REDIRECT_URI.replace('/callback', '')}/payment-cancel`,
             user_action: 'PAY_NOW',
         },
     });
@@ -355,20 +246,12 @@ app.post('/api/create-payment', async (req, res) => {
 
 app.get('/payment-success', async (req, res) => {
     if (!req.query.token) return res.redirect('/premium?message=error');
-    // === AJOUT: Assurez-vous que la DB est connectée ici aussi ===
-    if (!db) {
-        console.error("ERREUR: DB non connectée dans /payment-success");
-        return res.redirect('/premium?message=error-db');
-    }
     const request = new paypalSDK.orders.OrdersCaptureRequest(req.query.token);
     request.requestBody({});
     try {
         const capture = await paypalClient.execute(request);
-        // === MODIFICATION: Vérification plus robuste de la structure de la réponse PayPal ===
-        const purchaseUnit = capture.result.purchase_units && capture.result.purchase_units[0];
-        const captureDetails = purchaseUnit && purchaseUnit.payments && purchaseUnit.payments.captures && purchaseUnit.payments.captures[0];
-        const userId = captureDetails && captureDetails.custom_id;
-
+        const purchaseUnit = capture.result.purchase_units[0];
+        const userId = purchaseUnit.payments.captures[0].custom_id;
         if (userId) {
             const premiumCollection = db.collection('premiumsubscriptions');
             const userDb = await premiumCollection.findOne({ userId });
@@ -383,7 +266,7 @@ app.get('/payment-success', async (req, res) => {
             console.log(`✅ [SUCCESS PAGE] VIP activé/prolongé pour l'utilisateur ${userId} jusqu'au ${newExpiryDate.toISOString()}`);
             res.redirect('/premium?message=success');
         } else {
-            throw new Error("ID utilisateur non trouvé dans la transaction PayPal ou structure de réponse inattendue.");
+            throw new Error("ID utilisateur non trouvé dans la transaction PayPal.");
         }
     } catch (err) {
         console.error("❌ Erreur lors de la capture du paiement:", err.message);
@@ -398,11 +281,6 @@ app.get('/payment-cancel', (req, res) => {
 // --- ROUTES API DIVERSES ---
 app.post('/api/settings/:guildId/welcome', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Non authentifié' });
-    // === AJOUT: Assurez-vous que la DB est connectée ici aussi ===
-    if (!db) {
-        console.error("ERREUR: DB non connectée dans /api/settings/:guildId/welcome");
-        return res.status(500).json({ success: false, message: 'Erreur serveur: DB non connectée.' });
-    }
     try {
         const { enabled, channelId, message, bannerUrl } = req.body;
         await db.collection('settings').updateOne(
@@ -424,18 +302,8 @@ app.post('/api/settings/:guildId/welcome', async (req, res) => {
 
 app.post('/api/settings/:guildId/autorole', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Non authentifié' });
-    // === AJOUT: Assurez-vous que la DB est connectée ici aussi ===
-    if (!db) {
-        console.error("ERREUR: DB non connectée dans /api/settings/:guildId/autorole");
-        return res.status(500).json({ success: false, message: 'Erreur serveur: DB non connectée.' });
-    }
     try {
         const { enabled, roles } = req.body;
-        // === MODIFICATION: S'assurer que 'roles' est bien un tableau avant de sauvegarder ===
-        if (!Array.isArray(roles)) {
-            console.warn(`Tentative de sauvegarde d'autorole avec un champ 'roles' non-tableau pour le serveur ${req.params.guildId}. Valeur reçue:`, roles);
-            return res.status(400).json({ success: false, message: 'Le champ "roles" doit être un tableau.' });
-        }
         await db.collection('settings').updateOne(
             { guildId: req.params.guildId },
             { $set: { 
@@ -453,11 +321,6 @@ app.post('/api/settings/:guildId/autorole', async (req, res) => {
 
 app.post('/api/claim-trial-vip', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Non authentifié' });
-    // === AJOUT: Assurez-vous que la DB est connectée ici aussi ===
-    if (!db) {
-        console.error("ERREUR: DB non connectée dans /api/claim-trial-vip");
-        return res.status(500).json({ success: false, message: 'Erreur serveur: DB non connectée.' });
-    }
     try {
         const premiumCollection = db.collection('premiumsubscriptions');
         const userDb = await premiumCollection.findOne({ userId: req.session.user.id });
@@ -498,7 +361,7 @@ async function startServer() {
         });
     } catch (err) {
         console.error("❌ Erreur critique de connexion, le serveur ne peut pas démarrer:", err);
-        process.exit(1); // Arrêter l'application si la DB ne peut pas se connecter
+        process.exit(1);
     }
 }
 
