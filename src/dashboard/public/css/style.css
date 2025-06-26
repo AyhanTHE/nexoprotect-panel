@@ -95,7 +95,8 @@ section {
 .main-nav {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    /* CORRECTION : Augmentation de l'espacement */
+    gap: 2rem; 
 }
 
 .nav-link {
@@ -111,6 +112,27 @@ section {
     color: #fff;
     text-shadow: 0 0 8px var(--accent-glow);
 }
+
+/* CORRECTION : Effet de soulignement néon */
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    background: var(--accent-color);
+    bottom: -5px; /* On le descend un peu */
+    left: 50%;
+    transform: translateX(-50%);
+    transition: width 0.3s ease-in-out;
+    box-shadow: 0 0 10px var(--accent-glow);
+    opacity: 0;
+}
+
+.nav-link:hover::after, .nav-link.active::after {
+    width: 100%;
+    opacity: 1;
+}
+
 
 /* --- Boutons avec effet néon --- */
 .btn {
@@ -305,7 +327,8 @@ section {
 
 /* --- Sections Équipe & Blacklist --- */
 .team {
-    padding-bottom: 0;
+    /* CORRECTION : Espacement ajouté pour que la ligne de séparation ne coupe pas le statut */
+    padding-bottom: 6rem; 
 }
 
 .team-grid {
@@ -358,8 +381,9 @@ section {
 .blacklist-text { flex-basis: 60%; }
 .blacklist-image { flex-basis: 40%; text-align: center; }
 
+/* CORRECTION : Icône agrandie */
 .blacklist-image .fa-user-slash {
-    font-size: 12rem;
+    font-size: 15rem; 
     color: var(--bg-secondary);
     text-shadow: 0 0 30px rgba(200, 50, 50, 0.5);
     transform: rotate(-10deg);
