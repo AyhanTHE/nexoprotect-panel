@@ -85,7 +85,7 @@ app.get('/dashboard', async (req, res) => {
         const premiumCollection = db.collection('premiumsubscriptions');
         const userDbInfo = await premiumCollection.findOne({ userId: req.session.user.id });
         const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
-        const user = { ...req.session.user, grade };
+        const user = { ...req.session.user, grade, usedTrial: userDbInfo ? userDbInfo.usedTrial : false };
         const guildsResponse = await fetch('https://discord.com/api/users/@me/guilds', { headers: { authorization: `Bearer ${req.session.accessToken}` } });
         const userGuilds = await guildsResponse.json();
         const adminGuilds = userGuilds.filter(g => (BigInt(g.permissions) & 8n) === 8n);
@@ -129,13 +129,14 @@ app.get('/manage/:guildId', async (req, res) => {
 app.get('/premium', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
     try {
+        const premiumCollection = db.collection('premiumsubscriptions');
         const [userDbInfo, vipCount, serverCount] = await Promise.all([
-            db.collection('premiumsubscriptions').findOne({ userId: req.session.user.id }),
-            db.collection('premiumsubscriptions').countDocuments({ vipExpires: { $gt: new Date() } }),
+            premiumCollection.findOne({ userId: req.session.user.id }),
+            premiumCollection.countDocuments({ vipExpires: { $gt: new Date() } }),
             db.collection('botGuilds').countDocuments()
         ]);
         const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
-        const user = { ...req.session.user, grade };
+        const user = { ...req.session.user, grade, usedTrial: userDbInfo ? userDbInfo.usedTrial : false };
         const stats = {
             vipCount: vipCount,
             bannedCount: 0,
@@ -221,7 +222,40 @@ app.get('/payment-cancel', (req, res) => {
 // --- ROUTES API EXISTANTES ---
 app.post('/api/settings/:guildId/welcome', async (req, res) => { /* ... */ });
 app.post('/api/settings/:guildId/autorole', async (req, res) => { /* ... */ });
-app.post('/api/claim-vip', async (req, res) => { /* ... */ });
+
+// MODIFIÉ : Route pour l'essai VIP gratuit
+app.post('/api/claim-trial-vip', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Non authentifié' });
+
+    try {
+        const premiumCollection = db.collection('premiumsubscriptions');
+        const userDb = await premiumCollection.findOne({ userId: req.session.user.id });
+
+        // Vérifier si l'utilisateur est déjà VIP ou a déjà utilisé l'essai
+        if ((userDb && userDb.vipExpires && new Date(userDb.vipExpires) > new Date()) || (userDb && userDb.usedTrial)) {
+            return res.status(403).json({ success: false, message: 'Déjà VIP ou essai utilisé.' });
+        }
+
+        // Ajoute 24 heures de VIP
+        const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await premiumCollection.updateOne(
+            { userId: req.session.user.id },
+            { 
+                $set: { vipExpires: expiryDate, usedTrial: true },
+                $setOnInsert: { userId: req.session.user.id }
+            },
+            { upsert: true }
+        );
+
+        console.log(`✅ Essai VIP activé pour ${req.session.user.id} jusqu'au ${expiryDate.toISOString()}`);
+        res.json({ success: true });
+
+    } catch (error) {
+        console.error("Erreur lors de l'activation de l'essai VIP:", error);
+        res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+    }
+});
 
 
 // --- CONNEXION À LA DB & DÉMARRAGE DU SERVEUR ---
