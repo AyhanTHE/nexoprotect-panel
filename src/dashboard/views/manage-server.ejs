@@ -192,11 +192,15 @@
             // Ajout d'un try/catch robuste pour gérer les données JSON malformées.
             const allServerRolesJSON = '<%- JSON.stringify(roles) %>';
             let allServerRoles = [];
+
+            // *** AJOUT POUR LE DÉBOGAGE : Affichez la chaîne JSON brute ***
+            console.log("JSON des rôles brut (depuis EJS) :", allServerRolesJSON);
+
             try {
                 allServerRoles = JSON.parse(allServerRolesJSON);
             } catch (e) {
                 console.error("Erreur lors du parsing des rôles du serveur (JSON malformé ?):", e);
-                console.error("JSON des rôles brut reçu :", allServerRolesJSON);
+                console.error("La chaîne JSON qui a échoué :", allServerRolesJSON);
                 // Si une erreur de parsing se produit, on s'assure que allServerRoles est un tableau vide.
                 allServerRoles = []; 
                 alert("Erreur: Les données des rôles du serveur n'ont pas pu être chargées correctement. Veuillez vérifier la console pour plus de détails.");
@@ -205,7 +209,7 @@
             // Si allServerRoles n'est pas un tableau après le parsing (suite à une erreur ou une donnée inattendue)
             if (!Array.isArray(allServerRoles)) {
                 allServerRoles = []; 
-                console.warn("allServerRoles n'est pas un tableau, initialisation à un tableau vide.");
+                console.warn("allServerRoles n'est pas un tableau valide après parsing, initialisation à un tableau vide.");
             }
 
             // --- GESTION DES ONGLETS ---
@@ -224,7 +228,7 @@
             }
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
-                    e.preventDefault();
+                    e.preventDefault(); // Empêche le comportement par défaut du lien (#)
                     activateTab(tab);
                 });
             });
@@ -253,7 +257,7 @@
             };
             document.querySelectorAll('.module-toggle-switch').forEach(switchInput => {
                 switchInput.addEventListener('change', () => handleModuleToggle(switchInput));
-                // Initialiser l'état au chargement
+                // Initialiser l'état au chargement pour tous les interrupteurs
                 handleModuleToggle(switchInput); 
             });
 
