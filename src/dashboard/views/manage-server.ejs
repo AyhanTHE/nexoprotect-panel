@@ -50,7 +50,6 @@
         <main class="manage-main-content">
             <div id="tab-dashboard" class="tab-content active">
                 <header class="manage-header"><h1>Tableau de bord</h1><p>Vue d'ensemble et statistiques du serveur.</p></header>
-                
                 <% if (typeof guild !== 'undefined' && guild) { %>
                 <div class="dashboard-grid">
                     <div class="dashboard-card main-info-card">
@@ -64,7 +63,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dashboard-card stat-card">
                         <i class="fas fa-users"></i>
                         <div class="stat-details">
@@ -94,9 +92,7 @@
                         </div>
                     </div>
                 </div>
-                <% } else { %>
-                    <p>Les informations du serveur n'ont pas pu être chargées.</p>
-                <% } %>
+                <% } else { %><p>Les informations du serveur n'ont pas pu être chargées.</p><% } %>
             </div>
 
             <div id="tab-welcome" class="tab-content">
@@ -105,40 +101,40 @@
                     <p>Configurez ici les messages de bienvenue et d'au revoir pour votre serveur.</p>
                 </header>
                 <form id="welcome-settings-form" data-form-name="welcome">
-                    <details class="module-accordion" open>
+                    <details class="module-accordion <%= (settings.welcome && settings.welcome.enabled) ? 'is-enabled' : '' %>" open>
                         <summary class="module-summary">
                             <div class="summary-title"><i class="fas fa-hand-sparkles"></i><h3>Messages de Bienvenue</h3></div>
-                            <label class="switch"><input type="checkbox" name="welcomeEnabled" <%= (settings.welcome && settings.welcome.enabled) ? 'checked' : '' %>><span class="slider round"></span></label>
+                            <label class="switch"><input type="checkbox" name="welcomeEnabled" class="module-toggle-switch" <%= (settings.welcome && settings.welcome.enabled) ? 'checked' : '' %>><span class="slider round"></span></label>
                         </summary>
-                        <div class="module-content">
-                             <div class="settings-grid">
-                                 <div class="settings-column">
-                                     <label for="welcome-channel">Salon des messages de bienvenue</label>
-                                     <select id="welcome-channel" name="welcomeChannelId" class="select-box">
-                                         <option value="">Désactivé</option>
-                                         <% channels.forEach(channel => { %>
-                                             <option value="<%= channel.id %>" <%= (settings.welcome && settings.welcome.channelId === channel.id) ? 'selected' : '' %>>#<%= channel.name %></option>
-                                         <% }); %>
-                                     </select>
-                                     <label for="welcome-message">Message personnalisé</label>
-                                     <textarea id="welcome-message" name="welcomeMessage" class="textarea-box" placeholder="Ex: Bienvenue {user.username} !"><%= settings.welcome ? settings.welcome.message : '' %></textarea>
-                                     <label>Bannière de bienvenue</label>
-                                     <% if (user.grade === 'VIP') { %>
-                                         <div class="setting-vip-upload">
-                                             <input type="file" id="banner-upload-input" accept="image/png, image/jpeg, image/gif" style="display: none;">
-                                             <input type="hidden" name="welcomeBannerUrl" id="banner-base64-input" value="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>">
-                                             <button type="button" class="btn-upload" onclick="document.getElementById('banner-upload-input').click()"><i class="fas fa-upload"></i> Importer une image</button>
-                                             <div id="banner-preview" class="<%= (settings.welcome && settings.welcome.bannerUrl) ? '' : 'hidden' %>"><img src="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>" alt="Aperçu de la bannière"></div>
-                                         </div>
-                                     <% } else { %>
-                                         <div class="setting-locked"><p>Cette fonctionnalité est réservée aux membres VIP.</p><button type="button" class="btn-vip-upgrade"><i class="fas fa-star"></i> Devenir VIP</button></div>
-                                     <% } %>
-                                 </div>
-                                 <div class="preview-column">
-                                      <label>Prévisualisation</label>
-                                      <div class="discord-preview"><div class="discord-message"><img src="https://cdn.discordapp.com/embed/avatars/1.png" class="discord-avatar" alt="avatar"><div class="discord-message-content"><div class="discord-user-info"><span class="discord-username">NexoProtect</span><span class="discord-bot-tag">APP</span></div><div class="discord-text"><p>Ho ! Un nouveau membre !</p><p>✨ Bienvenue, <%= user.username %> ! ✨</p></div></div></div></div>
-                                 </div>
-                             </div>
+                        <div class="module-body">
+                            <div class="settings-grid">
+                                <div class="settings-column">
+                                    <label for="welcome-channel">Salon des messages de bienvenue</label>
+                                    <select id="welcome-channel" name="welcomeChannelId" class="select-box">
+                                        <option value="">Désactivé</option>
+                                        <% channels.forEach(channel => { %>
+                                            <option value="<%= channel.id %>" <%= (settings.welcome && settings.welcome.channelId === channel.id) ? 'selected' : '' %>>#<%= channel.name %></option>
+                                        <% }); %>
+                                    </select>
+                                    <label for="welcome-message">Message personnalisé</label>
+                                    <textarea id="welcome-message" name="welcomeMessage" class="textarea-box" placeholder="Ex: Bienvenue {user.username} !"><%= settings.welcome ? settings.welcome.message : '' %></textarea>
+                                    <label>Bannière de bienvenue</label>
+                                    <% if (user.grade === 'VIP') { %>
+                                        <div class="setting-vip-upload">
+                                            <input type="file" id="banner-upload-input" accept="image/png, image/jpeg, image/gif" style="display: none;">
+                                            <input type="hidden" name="welcomeBannerUrl" id="banner-base64-input" value="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>">
+                                            <button type="button" class="btn-upload" onclick="document.getElementById('banner-upload-input').click()"><i class="fas fa-upload"></i> Importer une image</button>
+                                            <div id="banner-preview" class="<%= (settings.welcome && settings.welcome.bannerUrl) ? '' : 'hidden' %>"><img src="<%= settings.welcome ? settings.welcome.bannerUrl : '' %>" alt="Aperçu de la bannière"></div>
+                                        </div>
+                                    <% } else { %>
+                                        <div class="setting-locked"><p>Cette fonctionnalité est réservée aux membres VIP.</p><button type="button" class="btn-vip-upgrade"><i class="fas fa-star"></i> Devenir VIP</button></div>
+                                    <% } %>
+                                </div>
+                                <div class="preview-column">
+                                    <label>Prévisualisation</label>
+                                    <div class="discord-preview"><div class="discord-message"><img src="https://cdn.discordapp.com/embed/avatars/1.png" class="discord-avatar" alt="avatar"><div class="discord-message-content"><div class="discord-user-info"><span class="discord-username">NexoProtect</span><span class="discord-bot-tag">APP</span></div><div class="discord-text"><p>Ho ! Un nouveau membre !</p><p>✨ Bienvenue, <%= user.username %> ! ✨</p></div></div></div></div>
+                                </div>
+                            </div>
                         </div>
                     </details>
                 </form>
@@ -147,33 +143,26 @@
             <div id="tab-autorole" class="tab-content">
                 <header class="manage-header"><h1>Rôles automatiques</h1><p>Définissez quels rôles attribuer automatiquement aux nouveaux membres.</p></header>
                 <form id="autorole-settings-form" data-form-name="autorole">
-                    <div class="settings-box">
+                    <div class="settings-box <%= (settings.autorole && settings.autorole.enabled) ? 'is-enabled' : '' %>">
                         <div class="box-header">
                             <h3>Rôles à l'arrivée</h3>
-                            <label class="switch"><input type="checkbox" name="autoroleEnabled" <%= (settings.autorole && settings.autorole.enabled) ? 'checked' : '' %>><span class="slider round"></span></label>
+                            <label class="switch"><input type="checkbox" name="autoroleEnabled" class="module-toggle-switch" <%= (settings.autorole && settings.autorole.enabled) ? 'checked' : '' %>><span class="slider round"></span></label>
                         </div>
-                        <p class="box-description">Attribuez un ou plusieurs rôles aux membres dès leur arrivée.</p>
-                        
-                        <div class="role-selector-wrapper">
-                            <div class="selected-roles-container" id="selected-roles-container">
-                                </div>
-                            <input type="text" id="role-search-input" placeholder="Chercher ou sélectionner un rôle...">
-                            <div class="role-search-results" id="role-search-results">
-                                </div>
+                        <div class="module-body">
+                            <p class="box-description">Attribuez un ou plusieurs rôles aux membres dès leur arrivée.</p>
+                            <div class="role-selector-wrapper">
+                                <div class="selected-roles-container" id="selected-roles-container"></div>
+                                <input type="text" id="role-search-input" placeholder="Chercher ou sélectionner un rôle...">
+                                <div class="role-search-results" id="role-search-results"></div>
+                            </div>
+                            <input type="hidden" name="autoroleRoles" id="autorole-roles-input" value="<%= (settings.autorole && settings.autorole.roles) ? settings.autorole.roles.join(',') : '' %>">
                         </div>
-                        
-                        <input type="hidden" name="autoroleRoles" id="autorole-roles-input" value="<%= (settings.autorole && settings.autorole.roles) ? settings.autorole.roles.join(',') : '' %>">
                     </div>
                 </form>
             </div>
             
-            <div id="tab-automod" class="tab-content">
-                <header class="manage-header"><h1>Auto-Modération</h1><p>Ce module est en cours de développement.</p></header>
-            </div>
-            
-            <div id="tab-moderation" class="tab-content">
-                <header class="manage-header"><h1>Modération</h1><p>Ce module est en cours de développement.</p></header>
-            </div>
+            <div id="tab-automod" class="tab-content"><header class="manage-header"><h1>Auto-Modération</h1><p>Ce module est en cours de développement.</p></header></div>
+            <div id="tab-moderation" class="tab-content"><header class="manage-header"><h1>Modération</h1><p>Ce module est en cours de développement.</p></header></div>
         </main>
     </div>
 
@@ -184,15 +173,12 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- CORRECTION POUR L'ÉDITEUR DE TEXTE ---
-            // On injecte les données dans une chaîne de caractères, puis on la parse.
             const allServerRolesJSON = '<%- JSON.stringify(roles) %>';
             const allServerRoles = JSON.parse(allServerRolesJSON);
     
             // --- GESTION DES ONGLETS ---
             const tabs = document.querySelectorAll('.nav-category');
             const contents = document.querySelectorAll('.tab-content');
-            
             const activateTab = (tabEl) => {
               if(!tabEl) return;
               tabs.forEach(t => t.classList.remove('active'));
@@ -201,7 +187,6 @@
               const targetId = tabEl.getAttribute('data-tab');
               document.getElementById(targetId)?.classList.add('active');
             }
-
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -209,7 +194,6 @@
                 });
             });
             activateTab(document.querySelector('.nav-category.active'));
-
 
             // --- BARRE DE SAUVEGARDE ---
             const saveBar = document.getElementById('save-bar');
@@ -221,15 +205,37 @@
             }
             document.querySelectorAll('form').forEach(form => form.addEventListener('input', showSaveBar));
 
+            // --- LOGIQUE POUR CACHER/AFFICHER LES OPTIONS DES MODULES ---
+            const handleModuleToggle = (switchInput) => {
+                const parentContainer = switchInput.closest('.settings-box, .module-accordion');
+                if (parentContainer) {
+                    if (switchInput.checked) {
+                        parentContainer.classList.add('is-enabled');
+                    } else {
+                        parentContainer.classList.remove('is-enabled');
+                    }
+                }
+            };
+            document.querySelectorAll('.module-toggle-switch').forEach(switchInput => {
+                switchInput.addEventListener('change', () => handleModuleToggle(switchInput));
+            });
 
-            // --- NOUVELLE LOGIQUE POUR LE SÉLECTEUR DE RÔLES ---
+            // --- LOGIQUE SÉLECTEUR DE RÔLE ---
             const searchInput = document.getElementById('role-search-input');
             const resultsContainer = document.getElementById('role-search-results');
             const selectedContainer = document.getElementById('selected-roles-container');
             const hiddenInput = document.getElementById('autorole-roles-input');
+            const selectorWrapper = document.querySelector('.role-selector-wrapper');
+
+            if (selectorWrapper) {
+                selectorWrapper.addEventListener('click', (e) => {
+                    if (e.target.closest('.role-pill')) return;
+                    searchInput.focus();
+                });
+            }
 
             const selectedRoles = new Set(hiddenInput.value ? hiddenInput.value.split(',') : []);
-
+            
             const updateSelectedDisplay = () => {
                 selectedContainer.innerHTML = '';
                 selectedRoles.forEach(roleId => {
@@ -287,10 +293,11 @@
                 );
                 
                 resultsContainer.innerHTML = '';
-                if (filteredRoles.length === 0) {
+                if (filteredRoles.length === 0 && searchTerm) {
                     resultsContainer.innerHTML = '<div class="result-item disabled">Aucun rôle trouvé</div>';
                 } else {
-                    filteredRoles.forEach(role => {
+                    const rolesToShow = searchTerm ? filteredRoles : allServerRoles.filter(role => !selectedRoles.has(role.id));
+                    rolesToShow.forEach(role => {
                         const item = document.createElement('div');
                         item.className = 'result-item';
                         if (!role.canManage) {
@@ -305,7 +312,6 @@
                         colorSpan.style.backgroundColor = role.color;
                         item.appendChild(colorSpan);
                         item.append(role.name);
-
                         resultsContainer.appendChild(item);
                     });
                 }
@@ -321,8 +327,7 @@
             });
             updateSelectedDisplay();
 
-
-            // --- LOGIQUE DE SAUVEGARDE (Inchangée) ---
+            // --- LOGIQUE DE SAUVEGARDE ---
             const saveButton = document.getElementById('save-button');
             if(saveButton) {
                 saveButton.addEventListener('click', async () => {
@@ -354,11 +359,15 @@
                         }));
                     });
                     try {
-                        await Promise.all(promises);
+                        const responses = await Promise.all(promises);
+                        for (const res of responses) {
+                            if (!res.ok) throw new Error(`Échec d'une sauvegarde: ${res.statusText}`);
+                        }
                         document.getElementById('save-status').textContent = 'Changements enregistrés !';
                         if(saveBar) setTimeout(() => saveBar.classList.remove('visible'), 2000);
                     } catch (error) {
                         document.getElementById('save-status').textContent = 'Une erreur est survenue.';
+                        console.error("Save error:", error);
                     } finally {
                         setTimeout(() => {
                             saveButton.disabled = false;
@@ -368,10 +377,26 @@
                 });
             }
 
-            // --- LOGIQUE POUR L'IMPORT D'IMAGE (Inchangée) ---
+            // --- LOGIQUE POUR L'IMPORT D'IMAGE ---
             const bannerInput = document.getElementById('banner-upload-input');
             if (bannerInput) {
-                // ... (code de la bannière inchangé)
+                const bannerBase64Input = document.getElementById('banner-base64-input');
+                const bannerPreviewContainer = document.getElementById('banner-preview');
+                const bannerPreviewImg = bannerPreviewContainer.querySelector('img');
+                bannerInput.addEventListener('change', () => {
+                    const file = bannerInput.files[0];
+                    if (file && bannerPreviewImg) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const base64String = e.target.result;
+                            bannerPreviewImg.src = base64String;
+                            bannerBase64Input.value = base64String;
+                            bannerPreviewContainer.classList.remove('hidden');
+                            showSaveBar();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
             }
         });
     </script>
