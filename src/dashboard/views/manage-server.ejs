@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion de <%= typeof guild !== 'undefined' ? guild.name : 'Serveur' %></title>
-    <!-- Assurez-vous que le chemin vers ce CSS est correct -->
     <link rel="stylesheet" href="/css/manage.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,10 +24,10 @@
             </div>
             
             <nav class="manage-nav">
-                <a href="#" class="nav-category" data-tab="tab-dashboard"><i class="fas fa-tachometer-alt"></i><span>Tableau de bord</span></a>
+                <a href="#" class="nav-category active" data-tab="tab-dashboard"><i class="fas fa-tachometer-alt"></i><span>Tableau de bord</span></a>
                 <div class="nav-divider"></div>
                 <h3 class="nav-title">Modules</h3>
-                <a href="#" class="nav-category active" data-tab="tab-welcome"><i class="fas fa-users"></i><span>Arrivées & Départs</span></a>
+                <a href="#" class="nav-category" data-tab="tab-welcome"><i class="fas fa-users"></i><span>Arrivées & Départs</span></a>
                 <a href="#" class="nav-category" data-tab="tab-autorole"><i class="fas fa-user-tag"></i><span>Rôles automatiques</span></a>
                 <a href="#" class="nav-category" data-tab="tab-automod"><i class="fas fa-robot"></i><span>Auto-Modération</span></a>
                 <a href="#" class="nav-category" data-tab="tab-moderation"><i class="fas fa-shield-alt"></i><span>Modération</span></a>
@@ -49,13 +48,58 @@
         </aside>
 
         <main class="manage-main-content">
-            <!-- ONGLET: TABLEAU DE BORD -->
-            <div id="tab-dashboard" class="tab-content">
+            <div id="tab-dashboard" class="tab-content active">
                 <header class="manage-header"><h1>Tableau de bord</h1><p>Vue d'ensemble et statistiques du serveur.</p></header>
+                
+                <% if (typeof guild !== 'undefined' && guild) { %>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card main-info-card">
+                        <img src="<%= guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=256` : '/images/default-icon.png' %>" alt="Icône du serveur" class="server-main-icon">
+                        <div class="server-main-details">
+                            <h2><%= guild.name %></h2>
+                            <p class="server-id">ID: <%= guild.id %></p>
+                            <div class="owner-info">
+                                <i class="fas fa-crown"></i>
+                                <span>Propriétaire : <%= guild.owner ? guild.owner.username : 'Inconnu' %></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card stat-card">
+                        <i class="fas fa-users"></i>
+                        <div class="stat-details">
+                            <span class="stat-value"><%= guild.memberCount || 'N/A' %></span>
+                            <span class="stat-label">Membres</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-card stat-card">
+                        <i class="fas fa-hashtag"></i>
+                        <div class="stat-details">
+                            <span class="stat-value"><%= channels.length || 'N/A' %></span>
+                            <span class="stat-label">Salons</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-card stat-card">
+                        <i class="fas fa-tags"></i>
+                        <div class="stat-details">
+                            <span class="stat-value"><%= roles.length || 'N/A' %></span>
+                            <span class="stat-label">Rôles</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-card stat-card">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div class="stat-details">
+                            <span class="stat-value"><%= new Date(guild.createdTimestamp).toLocaleDateString('fr-FR') %></span>
+                            <span class="stat-label">Créé le</span>
+                        </div>
+                    </div>
+                </div>
+                <% } else { %>
+                    <p>Les informations du serveur n'ont pas pu être chargées.</p>
+                <% } %>
             </div>
 
-            <!-- ONGLET: ARRIVÉES & DÉPARTS -->
-            <div id="tab-welcome" class="tab-content active">
+            <div id="tab-welcome" class="tab-content">
                 <header class="manage-header">
                     <h1>Arrivées et départs</h1>
                     <p>Configurez ici les messages de bienvenue et d'au revoir pour votre serveur.</p>
@@ -100,7 +144,6 @@
                 </form>
             </div>
 
-            <!-- ONGLET: RÔLES AUTOMATIQUES -->
             <div id="tab-autorole" class="tab-content">
                 <header class="manage-header"><h1>Rôles automatiques</h1><p>Définissez quels rôles attribuer automatiquement aux nouveaux membres.</p></header>
                 <form id="autorole-settings-form" data-form-name="autorole">
@@ -125,12 +168,10 @@
                 </form>
             </div>
             
-            <!-- ONGLET: AUTO-MODÉRATION -->
             <div id="tab-automod" class="tab-content">
                 <header class="manage-header"><h1>Auto-Modération</h1><p>Ce module est en cours de développement.</p></header>
             </div>
             
-            <!-- ONGLET: MODÉRATION -->
             <div id="tab-moderation" class="tab-content">
                 <header class="manage-header"><h1>Modération</h1><p>Ce module est en cours de développement.</p></header>
             </div>
@@ -143,141 +184,142 @@
     </div>
 
     <script>
+        // Le script reste le même, mais on s'assure que le bon onglet est actif au début
         document.addEventListener('DOMContentLoaded', () => {
-            // --- GESTION DES ONGLETS ---
-            const tabs = document.querySelectorAll('.nav-category');
-            const contents = document.querySelectorAll('.tab-content');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if(tab.classList.contains('active')) return;
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    const targetId = tab.getAttribute('data-tab');
-                    contents.forEach(content => {
-                        content.classList.remove('active');
-                        if (content.id === targetId) content.classList.add('active');
-                    });
-                });
-            });
+             // --- GESTION DES ONGLETS ---
+             const tabs = document.querySelectorAll('.nav-category');
+             const contents = document.querySelectorAll('.tab-content');
+             
+             // Activation de l'onglet et du contenu par défaut
+             const defaultActiveTab = document.querySelector('.nav-category.active');
+             if (defaultActiveTab) {
+                 const targetId = defaultActiveTab.getAttribute('data-tab');
+                 document.getElementById(targetId)?.classList.add('active');
+             }
 
-            // --- BARRE DE SAUVEGARDE ---
-            const saveBar = document.getElementById('save-bar');
-            const showSaveBar = () => {
-                if(saveBar) {
-                    saveBar.classList.add('visible');
-                    document.getElementById('save-status').textContent = 'Des changements non sauvegardés.';
-                }
-            }
-            document.querySelectorAll('form').forEach(form => form.addEventListener('input', showSaveBar));
-            document.querySelectorAll('.role-item').forEach(item => item.addEventListener('click', showSaveBar));
-            
-            // --- LOGIQUE POUR AUTORÔLE (SÉLECTION MULTIPLE) ---
-            const roleContainer = document.querySelector('.role-selector-container');
-            if(roleContainer) {
-                const hiddenInput = document.getElementById('autorole-roles-input');
-                const selectedRoles = new Set(hiddenInput.value ? hiddenInput.value.split(',') : []);
+             tabs.forEach(tab => {
+                 tab.addEventListener('click', (e) => {
+                     e.preventDefault();
+                     if(tab.classList.contains('active')) return;
+                     tabs.forEach(t => t.classList.remove('active'));
+                     tab.classList.add('active');
+                     const targetId = tab.getAttribute('data-tab');
+                     contents.forEach(content => {
+                         content.classList.remove('active');
+                         if (content.id === targetId) content.classList.add('active');
+                     });
+                 });
+             });
 
-                roleContainer.addEventListener('click', (e) => {
-                    const roleItem = e.target.closest('.role-item');
-                    if (roleItem && !roleItem.querySelector('.permission-denied-icon')) {
-                        const roleId = roleItem.getAttribute('data-role-id');
-                        roleItem.classList.toggle('selected');
-                        
-                        if (selectedRoles.has(roleId)) {
-                            selectedRoles.delete(roleId);
-                        } else {
-                            selectedRoles.add(roleId);
-                        }
-                        hiddenInput.value = Array.from(selectedRoles).join(',');
-                        // L'événement 'input' est déjà géré par le listener de la barre de sauvegarde, pas besoin d'appeler showSaveBar() ici.
-                    }
-                });
-            }
-            
-            // --- LOGIQUE DE SAUVEGARDE AMÉLIORÉE ---
-            const saveButton = document.getElementById('save-button');
-            const saveStatus = document.getElementById('save-status');
-            if(saveButton) {
-                saveButton.addEventListener('click', async () => {
-                    saveButton.disabled = true;
-                    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
-                    
-                    const guildId = window.location.pathname.split('/').pop();
-                    const promises = [];
+            // ... le reste de votre script JS reste identique ...
+             const saveBar = document.getElementById('save-bar');
+             const showSaveBar = () => {
+                 if(saveBar) {
+                     saveBar.classList.add('visible');
+                     document.getElementById('save-status').textContent = 'Des changements non sauvegardés.';
+                 }
+             }
+             document.querySelectorAll('form').forEach(form => form.addEventListener('input', showSaveBar));
+             document.querySelectorAll('.role-item').forEach(item => item.addEventListener('click', showSaveBar));
+             
+             const roleContainer = document.querySelector('.role-selector-container');
+             if(roleContainer) {
+                 const hiddenInput = document.getElementById('autorole-roles-input');
+                 const selectedRoles = new Set(hiddenInput.value ? hiddenInput.value.split(',') : []);
 
-                    document.querySelectorAll('form').forEach(form => {
-                        const formName = form.getAttribute('data-form-name');
-                        if (!formName) return;
+                 roleContainer.addEventListener('click', (e) => {
+                     const roleItem = e.target.closest('.role-item');
+                     if (roleItem && !roleItem.querySelector('.permission-denied-icon')) {
+                         const roleId = roleItem.getAttribute('data-role-id');
+                         roleItem.classList.toggle('selected');
+                         
+                         if (selectedRoles.has(roleId)) {
+                             selectedRoles.delete(roleId);
+                         } else {
+                             selectedRoles.add(roleId);
+                         }
+                         hiddenInput.value = Array.from(selectedRoles).join(',');
+                     }
+                 });
+             }
+             
+             const saveButton = document.getElementById('save-button');
+             const saveStatus = document.getElementById('save-status');
+             if(saveButton) {
+                 saveButton.addEventListener('click', async () => {
+                     saveButton.disabled = true;
+                     saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+                     
+                     const guildId = window.location.pathname.split('/').pop();
+                     const promises = [];
 
-                        let formData = {};
-                        if (formName === 'welcome') {
-                            formData = {
-                                enabled: form.querySelector('[name=welcomeEnabled]').checked,
-                                channelId: form.querySelector('[name=welcomeChannelId]').value,
-                                message: form.querySelector('[name=welcomeMessage]').value,
-                                bannerUrl: form.querySelector('[name=welcomeBannerUrl]') ? form.querySelector('[name=welcomeBannerUrl]').value : null,
-                            };
-                        } else if (formName === 'autorole') {
-                            formData = {
-                                enabled: form.querySelector('[name=autoroleEnabled]').checked,
-                                // Envoie un tableau de rôles
-                                roles: form.querySelector('[name=autoroleRoles]').value.split(',').filter(Boolean) 
-                            };
-                        }
-                        
-                        promises.push(fetch(`/api/settings/${guildId}/${formName}`, { 
-                            method: 'POST', 
-                            headers: { 'Content-Type': 'application/json' }, 
-                            body: JSON.stringify(formData) 
-                        }));
-                    });
-                    
-                    try {
-                        // Attendre que toutes les sauvegardes soient terminées
-                        const responses = await Promise.all(promises);
-                        // Vérifier si toutes les réponses sont OK
-                        for (const res of responses) {
-                            if (!res.ok) throw new Error(`Échec d'une sauvegarde: ${res.statusText}`);
-                        }
+                     document.querySelectorAll('form').forEach(form => {
+                         const formName = form.getAttribute('data-form-name');
+                         if (!formName) return;
 
-                        saveStatus.textContent = 'Changements enregistrés !';
-                        if(saveBar) setTimeout(() => saveBar.classList.remove('visible'), 2000);
+                         let formData = {};
+                         if (formName === 'welcome') {
+                             formData = {
+                                 enabled: form.querySelector('[name=welcomeEnabled]').checked,
+                                 channelId: form.querySelector('[name=welcomeChannelId]').value,
+                                 message: form.querySelector('[name=welcomeMessage]').value,
+                                 bannerUrl: form.querySelector('[name=welcomeBannerUrl]') ? form.querySelector('[name=welcomeBannerUrl]').value : null,
+                             };
+                         } else if (formName === 'autorole') {
+                             formData = {
+                                 enabled: form.querySelector('[name=autoroleEnabled]').checked,
+                                 roles: form.querySelector('[name=autoroleRoles]').value.split(',').filter(Boolean) 
+                             };
+                         }
+                         
+                         promises.push(fetch(`/api/settings/${guildId}/${formName}`, { 
+                             method: 'POST', 
+                             headers: { 'Content-Type': 'application/json' }, 
+                             body: JSON.stringify(formData) 
+                         }));
+                     });
+                     
+                     try {
+                         const responses = await Promise.all(promises);
+                         for (const res of responses) {
+                             if (!res.ok) throw new Error(`Échec d'une sauvegarde: ${res.statusText}`);
+                         }
 
-                    } catch (error) {
-                        saveStatus.textContent = 'Une erreur est survenue.';
-                        console.error("Save error:", error);
-                    } finally {
-                        // Réactiver le bouton après une courte pause, même en cas d'erreur
-                        setTimeout(() => {
-                            saveButton.disabled = false;
-                            saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
-                        }, 2500);
-                    }
-                });
-            }
+                         saveStatus.textContent = 'Changements enregistrés !';
+                         if(saveBar) setTimeout(() => saveBar.classList.remove('visible'), 2000);
 
-            // --- LOGIQUE POUR L'IMPORT D'IMAGE ---
-            const bannerInput = document.getElementById('banner-upload-input');
-            if (bannerInput) {
-                const bannerBase64Input = document.getElementById('banner-base64-input');
-                const bannerPreviewContainer = document.getElementById('banner-preview');
-                const bannerPreviewImg = bannerPreviewContainer.querySelector('img');
-                bannerInput.addEventListener('change', () => {
-                    const file = bannerInput.files[0];
-                    if (file && bannerPreviewImg) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const base64String = e.target.result;
-                            bannerPreviewImg.src = base64String;
-                            bannerBase64Input.value = base64String;
-                            bannerPreviewContainer.classList.remove('hidden');
-                            showSaveBar();
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            }
+                     } catch (error) {
+                         saveStatus.textContent = 'Une erreur est survenue.';
+                         console.error("Save error:", error);
+                     } finally {
+                         setTimeout(() => {
+                             saveButton.disabled = false;
+                             saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+                         }, 2500);
+                     }
+                 });
+             }
+
+             const bannerInput = document.getElementById('banner-upload-input');
+             if (bannerInput) {
+                 const bannerBase64Input = document.getElementById('banner-base64-input');
+                 const bannerPreviewContainer = document.getElementById('banner-preview');
+                 const bannerPreviewImg = bannerPreviewContainer.querySelector('img');
+                 bannerInput.addEventListener('change', () => {
+                     const file = bannerInput.files[0];
+                     if (file && bannerPreviewImg) {
+                         const reader = new FileReader();
+                         reader.onload = (e) => {
+                             const base64String = e.target.result;
+                             bannerPreviewImg.src = base64String;
+                             bannerBase64Input.value = base64String;
+                             bannerPreviewContainer.classList.remove('hidden');
+                             showSaveBar();
+                         };
+                         reader.readAsDataURL(file);
+                     }
+                 });
+             }
         });
     </script>
 </body>
