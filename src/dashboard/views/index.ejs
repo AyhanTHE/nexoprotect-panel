@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexoProtect - Le Gardien de Votre Communauté</title>
     
-    <!-- CORRECTION: Chemin du CSS corrigé -->
+    <!-- Assurez-vous que le chemin vers votre fichier CSS est correct -->
     <link rel="stylesheet" href="/css/style.css">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,6 @@
     <header class="navbar">
         <div class="container">
             <a href="#hero" class="logo">
-                <!-- CORRECTION: Chemin de l'image corrigé -->
                 <img src="/images/NexoProtect-removebg-preview.png" alt="Logo NexoProtect">
                 <span class="logo-text">NexoProtect</span>
             </a>
@@ -27,9 +26,9 @@
                 <a href="#features" class="nav-link">Fonctionnalités</a>
                 <a href="#team" class="nav-link">Équipe</a>
                 <a href="#blacklist" class="nav-link">Blacklist</a>
-                <a href="#" class="nav-link">Statistiques</a>
+                <a href="#stats" class="nav-link">Statistiques</a>
                 <a href="#" class="nav-link">CGU</a>
-                <!-- Ce lien est pour connecter un UTILISATEUR, il est correct -->
+                <!-- Lien pour se connecter au Panel -->
                 <a href="https://discord.com/oauth2/authorize?client_id=1385350518267973802&response_type=code&redirect_uri=https%3A%2F%2Fnexoprotect.onrender.com%2Fcallback&scope=identify+guilds" class="btn btn-secondary">
                     <i class="fas fa-user-shield"></i> Panel
                 </a>
@@ -43,13 +42,12 @@
                 <div class="hero-text">
                     <h1>Le Gardien Indispensable pour Votre Serveur Discord</h1>
                     <p>Modération automatique, engagement communautaire et outils de gestion puissants. Laissez NexoProtect sécuriser et dynamiser votre communauté.</p>
-                    <!-- CORRECTION: Lien pour INVITER LE BOT -->
-                    <a href="https://discord.com/oauth2/authorize?client_id=1385350518267973802&response_type=code&redirect_uri=https%3A%2F%2Fnexoprotect.onrender.com%2Fcallback&scope=identify+guilds" class="btn btn-secondary" class="btn btn-primary">
+                    <!-- Lien pour INVITER LE BOT -->
+                    <a href="https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&permissions=8&scope=bot%20applications.commands" class="btn btn-primary">
                         <i class="fab fa-discord"></i> Ajouter à Discord
                     </a>
                 </div>
                 <div class="hero-image">
-                    <!-- CORRECTION: Chemin de l'image corrigé -->
                     <img src="/images/NexoProtect-removebg-preview.png" alt="Bouclier NexoProtect" class="hero-logo-main">
                 </div>
             </div>
@@ -84,7 +82,6 @@
                 <p class="team-subtitle">Une équipe de passionnés, engagés pour la lutte contre les RAIDS</p>
                 <div class="team-grid">
                     <div class="team-member-card">
-                        <!-- CORRECTION: Chemin de l'image corrigé -->
                         <img src="/images/icegif-1215.gif" alt="Photo de profil de Pottedmbz__" class="team-pfp">
                         <h3>Pottedmbz__</h3>
                         <p class="team-role">Fondateur</p>
@@ -116,36 +113,51 @@
             <div class="container">
                 <h2>Prêt à sécuriser votre communauté ?</h2>
                 <p>Invitez NexoProtect et profitez d'un serveur plus sûr et plus actif en quelques clics.</p>
-                <!-- CORRECTION: Lien pour INVITER LE BOT -->
-                <a href="https://discord.com/oauth2/authorize?client_id=1385350518267973802&response_type=code&redirect_uri=https%3A%2F%2Fnexoprotect.onrender.com%2Fcallback&scope=identify+guilds" class="btn btn-secondary" class="btn btn-primary">
+                <a href="https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&permissions=8&scope=bot%20applications.commands" class="btn btn-primary">
                     <i class="fab fa-discord"></i> Ajouter à Discord
                 </a>
             </div>
         </section>
 
+        <!-- ======================================================= -->
+        <!-- SECTION STATISTIQUES MISE À JOUR AVEC VOS DONNÉES       -->
+        <!-- ======================================================= -->
         <section id="stats" class="stats">
             <div class="stats-background"></div>
             <div class="container stats-content">
+                
+                <!-- Statistique 1: VIP Actifs -->
                 <div class="stat-item">
-                    <i class="fas fa-file-alt stat-icon"></i>
-                    <p class="stat-number" data-target="1353">0</p>
-                    <p class="stat-label">Rapports</p>
+                    <i class="fas fa-crown stat-icon"></i>
+                    <!-- Donnée dynamique depuis le serveur -->
+                    <p class="stat-number" data-target="<%= stats.vipCount %>">0</p>
+                    <p class="stat-label">VIP Actifs</p>
                 </div>
+
+                <!-- Statistique 2: Membres Bannis -->
                 <div class="stat-item">
-                    <i class="fas fa-trophy stat-icon"></i>
-                    <p class="stat-number" data-target="16">0</p>
-                    <p class="stat-label">Dons</p>
+                    <i class="fas fa-gavel stat-icon"></i>
+                     <!-- Donnée dynamique depuis le serveur -->
+                    <p class="stat-number" data-target="<%= stats.bannedCount %>">0</p>
+                    <p class="stat-label">Membres Bannis</p>
                 </div>
+
+                <!-- Statistique 3: Année d'expérience -->
                 <div class="stat-item">
-                    <i class="fas fa-code stat-icon"></i>
-                    <p class="stat-number" data-target="1520">0</p>
-                    <p class="stat-label">Lignes de code</p>
+                    <i class="fas fa-briefcase stat-icon"></i>
+                    <!-- Donnée statique -->
+                    <p class="stat-number" data-target="1">0</p>
+                    <p class="stat-label">Mois d'expérience</p>
                 </div>
+
+                <!-- Statistique 4: Serveurs Protégés -->
                 <div class="stat-item">
                     <i class="fas fa-shield-alt stat-icon"></i>
-                    <p class="stat-number" data-target="20936">0</p>
+                    <!-- Donnée dynamique depuis le serveur -->
+                    <p class="stat-number" data-target="<%= stats.serverCount %>">0</p>
                     <p class="stat-label">Serveurs protégés</p>
                 </div>
+
             </div>
         </section>
 
@@ -157,7 +169,7 @@
         </div>
     </footer>
 
-    <!-- CORRECTION: Chemin du script corrigé -->
+    <!-- Assurez-vous d'avoir ce script qui gère l'animation des compteurs -->
     <script src="/js/script.js"></script>
 </body>
 </html>
