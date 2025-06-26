@@ -35,6 +35,26 @@
             color: #f39c12;
             display: block;
         }
+        /* NOUVEAUX STYLES POUR LA LISTE DES AVANTAGES */
+        .features-list {
+            text-align: left;
+            margin: 2rem 0;
+            padding-left: 1rem;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+        .feature-item i {
+            font-size: 1.2rem;
+            color: var(--primary-accent);
+            width: 25px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -63,15 +83,12 @@
 
             <nav class="sidebar-nav">
                 <a href="/dashboard" class="nav-item"><i class="fas fa-server"></i> Serveurs</a>
-                <!-- CORRIGÉ : Le lien Premium est maintenant actif sur cette page -->
                 <a href="/premium" class="nav-item active"><i class="fas fa-gem"></i> Premium</a>
             </nav>
 
             <div class="sidebar-footer">
                 <% if (user) { %>
-                    <!-- CORRIGÉ : La logique d'affichage des boutons est mise à jour -->
                     <% if (user.grade !== 'VIP') { %>
-                        <!-- Ne s'affiche que si l'utilisateur n'est pas VIP et n'a pas utilisé l'essai -->
                         <% if (!user.usedTrial) { %>
                             <button id="claim-trial-btn" class="btn-vip">
                                 <i class="fas fa-star"></i> 
@@ -116,9 +133,32 @@
                     <% } %>
 
                     <h2>Un accès exclusif à des fonctionnalités uniques</h2>
-                    <p>
-                        Le grade Premium vous donne accès à une multitude de nouvelles fonctionnalités pour gérer vos serveurs Discord comme jamais auparavant. En plus des avantages sur le tableau de bord, vous obtiendrez un rôle et un grade exclusifs sur notre serveur Discord pour montrer votre soutien.
-                    </p>
+                    
+                    <!-- TEXTE MIS À JOUR AVEC UNE LISTE -->
+                    <p>Le Premium NexoProtect n'est pas juste un grade, c'est une nouvelle dimension de contrôle et de prestige pour votre serveur. Voici ce que vous débloquez :</p>
+                    
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <i class="fas fa-terminal"></i>
+                            <span>Accès à des commandes avancées pour une gestion puissante.</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-paint-brush"></i>
+                            <span>Personnalisation poussée des messages, embeds et logs.</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-headset"></i>
+                            <span>Support prioritaire de notre équipe en cas de besoin.</span>
+                        </div>
+                         <div class="feature-item">
+                            <i class="fas fa-crown"></i>
+                            <span>Un rôle exclusif sur notre Discord pour afficher votre soutien.</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-rocket"></i>
+                            <span>Accès anticipé aux nouvelles fonctionnalités avant tout le monde.</span>
+                        </div>
+                    </div>
 
                     <div class="price-tag">
                         Seulement 5€ <span class="per-month">/ mois</span>
@@ -165,10 +205,8 @@
         </main>
     </div>
     
-    <!-- CORRIGÉ : Le script inclut maintenant la logique pour les deux boutons -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Script pour l'essai VIP
             const claimVipBtn = document.getElementById('claim-trial-btn');
             if (claimVipBtn) {
                 claimVipBtn.addEventListener('click', () => {
@@ -187,7 +225,6 @@
                 });
             }
 
-            // Script pour le paiement
             const paymentBtn = document.getElementById('payment-btn');
             if (paymentBtn) {
                 paymentBtn.addEventListener('click', () => {
