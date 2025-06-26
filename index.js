@@ -29,13 +29,8 @@ app.use(session({
     cookie: { secure: process.env.NODE_ENV === 'production', httpOnly: true, maxAge: 1000 * 60 * 60 * 24 }
 }));
 
-// --- CONNEXION À LA BASE DE DONNÉES ---
+// --- DÉCLARATION DE LA DB ---
 let db;
-const mongoClient = new MongoClient(process.env.DATABASE_URL);
-mongoClient.connect().then(() => {
-    console.log('✅ Panel web connecté à la base de données MongoDB !');
-    db = mongoClient.db('nexoprotect_db');
-}).catch(err => console.error("❌ Erreur de connexion à MongoDB:", err));
 
 // --- CONFIGURATION DU CLIENT PAYPAL ---
 const Environment = process.env.NODE_ENV === 'production'
@@ -52,6 +47,11 @@ app.get('/', async (req, res) => {
     if (req.session.user) return res.redirect('/dashboard');
 
     try {
+        // Ajout d'une vérification pour s'assurer que la DB est prête
+        if (!db) {
+            throw new Error("La connexion à la base de données n'est pas encore établie.");
+        }
+
         const [vipCount, serverCount] = await Promise.all([
             db.collection('premiumsubscriptions').countDocuments({ vipExpires: { $gt: new Date() } }),
             db.collection('botGuilds').countDocuments()
@@ -67,7 +67,7 @@ app.get('/', async (req, res) => {
         res.render('index', { stats }); // On envoie les stats à la page index.ejs
 
     } catch (error) {
-        console.error("Erreur lors de la récupération des statistiques pour la page d'accueil:", error);
+        console.error("Erreur lors de la récupération des statistiques pour la page d'accueil:", error.message);
         // En cas d'erreur, on affiche la page avec des stats par défaut
         res.render('index', {
             stats: { vipCount: 0, bannedCount: 0, serverCount: 0 }
@@ -125,12 +125,7 @@ app.get('/manage/:guildId', async (req, res) => {
     }
 });
 
-// ... (le reste de votre code pour le premium et paypal reste inchangé) ...
-// ===============================================
 // --- ROUTES PREMIUM ET PAYPAL (SANS WEBHOOKS) ---
-// ===============================================
-
-// AFFICHER LA PAGE PREMIUM
 app.get('/premium', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
     try {
@@ -161,7 +156,6 @@ app.get('/premium', async (req, res) => {
     }
 });
 
-// CRÉER LA COMMANDE PAYPAL
 app.post('/api/create-payment', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Non authentifié' });
     const request = new paypalSDK.orders.OrdersCreateRequest();
@@ -190,7 +184,6 @@ app.post('/api/create-payment', async (req, res) => {
     }
 });
 
-// PAIEMENT RÉUSSI
 app.get('/payment-success', async (req, res) => {
     if (!req.query.token) return res.redirect('/premium?message=error');
     const request = new paypalSDK.orders.OrdersCaptureRequest(req.query.token);
@@ -221,7 +214,6 @@ app.get('/payment-success', async (req, res) => {
     }
 });
 
-// PAIEMENT ANNULÉ
 app.get('/payment-cancel', (req, res) => {
     res.redirect('/premium?message=cancelled');
 });
@@ -231,5 +223,23 @@ app.post('/api/settings/:guildId/welcome', async (req, res) => { /* ... */ });
 app.post('/api/settings/:guildId/autorole', async (req, res) => { /* ... */ });
 app.post('/api/claim-vip', async (req, res) => { /* ... */ });
 
-// --- DÉMARRAGE DU SERVEUR ---
-app.listen(PORT, () => console.log(`✅ Serveur web du panel démarré et à l'écoute sur le port ${PORT}`));
+
+// --- CONNEXION À LA DB & DÉMARRAGE DU SERVEUR ---
+const mongoClient = new MongoClient(process.env.DATABASE_URL);
+
+async function startServer() {
+    try {
+        await mongoClient.connect();
+        console.log('✅ Panel web connecté à la base de données MongoDB !');
+        db = mongoClient.db('nexoprotect_db');
+        
+        app.listen(PORT, () => {
+            console.log(`✅ Serveur web du panel démarré et à l'écoute sur le port ${PORT}`);
+        });
+    } catch (err) {
+        console.error("❌ Erreur critique de connexion, le serveur ne peut pas démarrer:", err);
+        process.exit(1);
+    }
+}
+
+startServer();
