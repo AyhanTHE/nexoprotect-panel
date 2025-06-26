@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexoProtect - Le Gardien de Votre Communauté</title>
     
-    <!-- Assurez-vous que le chemin vers votre fichier CSS est correct -->
+    <!-- Assurez-vous que ce chemin est correct pour votre projet -->
     <link rel="stylesheet" href="/css/style.css">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,8 +28,7 @@
                 <a href="#blacklist" class="nav-link">Blacklist</a>
                 <a href="#stats" class="nav-link">Statistiques</a>
                 <a href="#" class="nav-link">CGU</a>
-                <!-- Lien pour se connecter au Panel -->
-                <a href="https://discord.com/oauth2/authorize?client_id=1385350518267973802&response_type=code&redirect_uri=https%3A%2F%2Fnexoprotect.onrender.com%2Fcallback&scope=identify+guilds" class="btn btn-secondary">
+                <a href="/dashboard" class="btn btn-secondary">
                     <i class="fas fa-user-shield"></i> Panel
                 </a>
             </nav>
@@ -37,12 +36,12 @@
     </header>
 
     <main>
+        <!-- Section Héros (votre code) -->
         <section id="hero" class="hero">
             <div class="container hero-content">
                 <div class="hero-text">
                     <h1>Le Gardien Indispensable pour Votre Serveur Discord</h1>
                     <p>Modération automatique, engagement communautaire et outils de gestion puissants. Laissez NexoProtect sécuriser et dynamiser votre communauté.</p>
-                    <!-- Lien pour INVITER LE BOT -->
                     <a href="https://discord.com/api/oauth2/authorize?client_id=1385350518267973802&permissions=8&scope=bot%20applications.commands" class="btn btn-primary">
                         <i class="fab fa-discord"></i> Ajouter à Discord
                     </a>
@@ -53,6 +52,7 @@
             </div>
         </section>
 
+        <!-- Section Fonctionnalités (ajoutée depuis votre image) -->
         <section id="features" class="features">
             <div class="container">
                 <h2>Des fonctionnalités pensées pour vous</h2>
@@ -76,6 +76,7 @@
             </div>
         </section>
 
+        <!-- Section Équipe (ajoutée depuis votre image) -->
         <section id="team" class="team">
             <div class="container">
                 <h2>Notre équipe</h2>
@@ -91,6 +92,7 @@
             </div>
         </section>
 
+        <!-- Section Blacklist (ajoutée depuis votre image) -->
         <section id="blacklist" class="blacklist">
             <div class="container">
                 <h2>Rapports de Protect</h2>
@@ -109,6 +111,7 @@
             </div>
         </section>
 
+        <!-- Section Appel à l'action (votre code) -->
         <section class="cta">
             <div class="container">
                 <h2>Prêt à sécuriser votre communauté ?</h2>
@@ -119,43 +122,33 @@
             </div>
         </section>
 
-        <!-- ======================================================= -->
-        <!-- SECTION STATISTIQUES MISE À JOUR AVEC VOS DONNÉES       -->
-        <!-- ======================================================= -->
+        <!-- Section Statistiques (mise à jour avec vos données dynamiques) -->
         <section id="stats" class="stats">
             <div class="stats-background"></div>
             <div class="container stats-content">
                 
-                <!-- Statistique 1: VIP Actifs -->
                 <div class="stat-item">
                     <i class="fas fa-crown stat-icon"></i>
-                    <!-- Donnée dynamique depuis le serveur -->
                     <p class="stat-number" data-target="<%= stats.vipCount %>">0</p>
                     <p class="stat-label">VIP Actifs</p>
                 </div>
-
-                <!-- Statistique 2: Membres Bannis -->
+                
                 <div class="stat-item">
                     <i class="fas fa-gavel stat-icon"></i>
-                     <!-- Donnée dynamique depuis le serveur -->
                     <p class="stat-number" data-target="<%= stats.bannedCount %>">0</p>
-                    <p class="stat-label">Membres Bannis</p>
+                    <p class="stat-label">Membre Banni au Total</p>
                 </div>
-
-                <!-- Statistique 3: Année d'expérience -->
+                
                 <div class="stat-item">
                     <i class="fas fa-briefcase stat-icon"></i>
-                    <!-- Donnée statique -->
-                    <p class="stat-number" data-target="1">0</p>
-                    <p class="stat-label">Mois d'expérience</p>
+                    <p class="stat-number" data-target="1">0</p> <!-- Valeur statique comme demandé -->
+                    <p class="stat-label">Mois d'Expérience</p>
                 </div>
-
-                <!-- Statistique 4: Serveurs Protégés -->
+                
                 <div class="stat-item">
                     <i class="fas fa-shield-alt stat-icon"></i>
-                    <!-- Donnée dynamique depuis le serveur -->
                     <p class="stat-number" data-target="<%= stats.serverCount %>">0</p>
-                    <p class="stat-label">Serveurs protégés</p>
+                    <p class="stat-label">Serveur Protéger</p>
                 </div>
 
             </div>
@@ -169,7 +162,7 @@
         </div>
     </footer>
 
-    <!-- Assurez-vous d'avoir ce script qui gère l'animation des compteurs -->
+    <!-- Assurez-vous d'avoir un script qui gère l'animation des compteurs -->
     <script src="/js/script.js"></script>
 </body>
 </html>
