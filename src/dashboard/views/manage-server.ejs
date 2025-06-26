@@ -185,7 +185,10 @@
               contents.forEach(c => c.classList.remove('active'));
               tabEl.classList.add('active');
               const targetId = tabEl.getAttribute('data-tab');
-              document.getElementById(targetId)?.classList.add('active');
+              const targetContent = document.getElementById(targetId);
+              if (targetContent) {
+                  targetContent.classList.add('active');
+              }
             }
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
@@ -229,8 +232,9 @@
 
             if (selectorWrapper) {
                 selectorWrapper.addEventListener('click', (e) => {
-                    if (e.target.closest('.role-pill')) return;
-                    searchInput.focus();
+                    if (!e.target.closest('.remove-role-btn')) {
+                        searchInput.focus();
+                    }
                 });
             }
 
@@ -293,10 +297,12 @@
                 );
                 
                 resultsContainer.innerHTML = '';
-                if (filteredRoles.length === 0 && searchTerm) {
-                    resultsContainer.innerHTML = '<div class="result-item disabled">Aucun rôle trouvé</div>';
+                
+                const rolesToShow = searchTerm ? filteredRoles : allServerRoles.filter(role => !selectedRoles.has(role.id));
+
+                if (rolesToShow.length === 0) {
+                     resultsContainer.innerHTML = '<div class="result-item disabled">Aucun rôle trouvé</div>';
                 } else {
-                    const rolesToShow = searchTerm ? filteredRoles : allServerRoles.filter(role => !selectedRoles.has(role.id));
                     rolesToShow.forEach(role => {
                         const item = document.createElement('div');
                         item.className = 'result-item';
