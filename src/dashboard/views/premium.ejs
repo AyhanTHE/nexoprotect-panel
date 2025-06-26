@@ -63,16 +63,21 @@
 
             <nav class="sidebar-nav">
                 <a href="/dashboard" class="nav-item"><i class="fas fa-server"></i> Serveurs</a>
-                <a href="#" class="nav-item"><i class="fas fa-cog"></i> Paramètres</a>
+                <!-- CORRIGÉ : Le lien Premium est maintenant actif sur cette page -->
+                <a href="/premium" class="nav-item active"><i class="fas fa-gem"></i> Premium</a>
             </nav>
 
             <div class="sidebar-footer">
                 <% if (user) { %>
+                    <!-- CORRIGÉ : La logique d'affichage des boutons est mise à jour -->
                     <% if (user.grade !== 'VIP') { %>
-                        <button id="claim-vip-btn" class="btn-vip">
-                            <i class="fas fa-star"></i> 
-                            <span>Réclamer VIP</span>
-                        </button>
+                        <!-- Ne s'affiche que si l'utilisateur n'est pas VIP et n'a pas utilisé l'essai -->
+                        <% if (!user.usedTrial) { %>
+                            <button id="claim-trial-btn" class="btn-vip">
+                                <i class="fas fa-star"></i> 
+                                <span>1 jour de VIP GRATUIT</span>
+                            </button>
+                        <% } %>
                         <a href="/premium" class="btn-premium">
                             <i class="fas fa-gem"></i>
                             <span>Devenir Premium</span>
@@ -132,7 +137,7 @@
                 </div>
             </div>
 
-            <!-- NOUVELLE SECTION STATISTIQUES -->
+            <!-- SECTION STATISTIQUES -->
             <% if (stats) { %>
             <div class="stats-section">
                 <div class="stat-card">
@@ -160,29 +165,52 @@
         </main>
     </div>
     
+    <!-- CORRIGÉ : Le script inclut maintenant la logique pour les deux boutons -->
     <script>
-        const paymentBtn = document.getElementById('payment-btn');
-        if (paymentBtn) {
-            paymentBtn.addEventListener('click', () => {
-                paymentBtn.disabled = true;
-                paymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirection vers PayPal...';
+        document.addEventListener('DOMContentLoaded', () => {
+            // Script pour l'essai VIP
+            const claimVipBtn = document.getElementById('claim-trial-btn');
+            if (claimVipBtn) {
+                claimVipBtn.addEventListener('click', () => {
+                    claimVipBtn.disabled = true;
+                    claimVipBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Activation...';
+                    fetch('/api/claim-trial-vip', { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.success) {
+                                window.location.reload();
+                            } else {
+                                claimVipBtn.innerHTML = data.message || 'Erreur';
+                                claimVipBtn.disabled = false;
+                            }
+                        });
+                });
+            }
 
-                fetch('/api/create-payment', { method: 'POST' })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.approveUrl) {
-                            window.location.href = data.approveUrl;
-                        } else {
-                            throw new Error(data.error || 'URL de paiement non reçue.');
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Erreur du script de paiement:', err);
-                        paymentBtn.disabled = false;
-                        paymentBtn.innerHTML = '<i class="fab fa-paypal"></i> Erreur, réessayez';
-                    });
-            });
-        }
+            // Script pour le paiement
+            const paymentBtn = document.getElementById('payment-btn');
+            if (paymentBtn) {
+                paymentBtn.addEventListener('click', () => {
+                    paymentBtn.disabled = true;
+                    paymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirection vers PayPal...';
+
+                    fetch('/api/create-payment', { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.approveUrl) {
+                                window.location.href = data.approveUrl;
+                            } else {
+                                throw new Error(data.error || 'URL de paiement non reçue.');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Erreur du script de paiement:', err);
+                            paymentBtn.disabled = false;
+                            paymentBtn.innerHTML = '<i class="fab fa-paypal"></i> Erreur, réessayez';
+                        });
+                });
+            }
+        });
     </script>
 </body>
 </html>

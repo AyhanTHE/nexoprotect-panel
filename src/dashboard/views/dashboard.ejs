@@ -37,27 +37,24 @@
 
             <nav class="sidebar-nav">
                 <a href="/dashboard" class="nav-item active"><i class="fas fa-server"></i> Serveurs</a>
-                <a href="#" class="nav-item"><i class="fas fa-cog"></i> Paramètres</a>
+                <a href="/premium" class="nav-item"><i class="fas fa-gem"></i> Premium</a>
             </nav>
 
-            <!-- NOUVEAU : Logique d'affichage des boutons -->
             <div class="sidebar-footer">
                 <% if (user) { %>
-                    <% if (user.grade !== 'VIP') { %>
-                        <!-- Ces boutons ne s'affichent que si l'utilisateur N'EST PAS VIP -->
-                        <button id="claim-vip-btn" class="btn-vip">
+                    <!-- CORRIGÉ : Le bouton s'affiche si l'utilisateur n'est pas VIP et n'a pas utilisé l'essai -->
+                    <% if (user.grade !== 'VIP' && !user.usedTrial) { %>
+                        <button id="claim-trial-btn" class="btn-vip">
                             <i class="fas fa-star"></i> 
-                            <span>Réclamer VIP</span>
+                            <span>1 jour de VIP GRATUIT</span>
                         </button>
-                        <a href="/premium" class="btn-premium">
-                            <i class="fas fa-gem"></i>
-                            <span>Devenir Premium</span>
-                        </a>
                     <% } %>
-                    <!-- Si l'utilisateur est VIP, les boutons ci-dessus sont masqués -->
+                    <a href="/premium" class="btn-premium">
+                        <i class="fas fa-gem"></i>
+                        <span>Devenir Premium</span>
+                    </a>
                 <% } %>
             
-                <!-- Le bouton de déconnexion est toujours visible -->
                 <a href="/logout" class="btn-logout">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Déconnexion</span>
@@ -100,18 +97,20 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const claimVipBtn = document.getElementById('claim-vip-btn');
+            const claimVipBtn = document.getElementById('claim-trial-btn');
             if (claimVipBtn) {
                 claimVipBtn.addEventListener('click', () => {
                     claimVipBtn.disabled = true;
                     claimVipBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Activation...';
-                    fetch('/api/claim-vip', { method: 'POST' })
+                    // CORRIGÉ : Appel de la bonne URL d'API
+                    fetch('/api/claim-trial-vip', { method: 'POST' })
                         .then(res => res.json())
                         .then(data => {
                             if(data.success) {
                                 window.location.reload();
                             } else {
                                 claimVipBtn.innerHTML = data.message || 'Erreur';
+                                claimVipBtn.disabled = false;
                             }
                         });
                 });
