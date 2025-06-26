@@ -283,10 +283,16 @@ h2 {
 }
 
 /* --- Section Équipe --- */
+/* CORRECTION : Centrage du sous-titre */
+.team-subtitle {
+    text-align: center;
+}
+
 .team-grid {
     display: flex;
     justify-content: center;
     gap: 2rem;
+    flex-wrap: wrap; /* Permet de passer à la ligne sur petits écrans */
 }
 
 .team-member-card {
@@ -364,28 +370,33 @@ h2 {
     color: var(--text-secondary);
 }
 
-/* --- Section Statistiques --- */
+/* --- Section Statistiques (CORRIGÉE) --- */
 .stats {
     background-color: var(--bg-light);
     padding: 5rem 0;
     border-top: 1px solid var(--border-color);
 }
 
-.stats-grid {
+/* CORRECTION : Utilisation de grid pour un alignement parfait */
+.stats-content {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
-    text-align: center;
+    gap: 1rem;
 }
 
 .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centre horizontalement */
+    justify-content: center; /* Centre verticalement */
+    text-align: center; /* Assure que le texte est centré */
     padding: 2rem;
 }
 
 .stat-item .stat-icon {
     font-size: 2.5rem;
     color: var(--accent-blue-hover);
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .stat-item .stat-number {
@@ -404,6 +415,7 @@ h2 {
     letter-spacing: 1px;
     color: var(--text-secondary);
 }
+
 
 /* --- Section Appel à l'Action (CTA) --- */
 .cta {
@@ -429,7 +441,7 @@ h2 {
     .navbar .container {
         justify-content: center;
     }
-    .stats-grid {
+    .stats-content {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -451,7 +463,7 @@ h2 {
 }
 
 @media (max-width: 576px) {
-    .stats-grid {
+    .stats-content {
         grid-template-columns: 1fr;
     }
 }
