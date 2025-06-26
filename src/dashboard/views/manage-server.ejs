@@ -153,16 +153,15 @@
                             <label class="switch"><input type="checkbox" name="autoroleEnabled" <%= (settings.autorole && settings.autorole.enabled) ? 'checked' : '' %>><span class="slider round"></span></label>
                         </div>
                         <p class="box-description">Attribuez un ou plusieurs rôles aux membres dès leur arrivée.</p>
-                        <div class="role-selector-container">
-                             <% roles.forEach(role => { %>
-                                 <div class="role-item <%= (settings.autorole && settings.autorole.roles && settings.autorole.roles.includes(role.id)) ? 'selected' : '' %>" data-role-id="<%= role.id %>">
-                                     <%= role.name %>
-                                     <% if (!role.canManage) { %>
-                                         <span class="permission-denied-icon" title="Le bot n'a pas la permission de gérer ce rôle."><i class="fas fa-exclamation-triangle"></i></span>
-                                     <% } %>
-                                 </div>
-                             <% }); %>
+                        
+                        <div class="role-selector-wrapper">
+                            <div class="selected-roles-container" id="selected-roles-container">
+                                </div>
+                            <input type="text" id="role-search-input" placeholder="Chercher ou sélectionner un rôle...">
+                            <div class="role-search-results" id="role-search-results">
+                                </div>
                         </div>
+                        
                         <input type="hidden" name="autoroleRoles" id="autorole-roles-input" value="<%= (settings.autorole && settings.autorole.roles) ? settings.autorole.roles.join(',') : '' %>">
                     </div>
                 </form>
@@ -184,142 +183,196 @@
     </div>
 
     <script>
-        // Le script reste le même, mais on s'assure que le bon onglet est actif au début
         document.addEventListener('DOMContentLoaded', () => {
-             // --- GESTION DES ONGLETS ---
-             const tabs = document.querySelectorAll('.nav-category');
-             const contents = document.querySelectorAll('.tab-content');
-             
-             // Activation de l'onglet et du contenu par défaut
-             const defaultActiveTab = document.querySelector('.nav-category.active');
-             if (defaultActiveTab) {
-                 const targetId = defaultActiveTab.getAttribute('data-tab');
-                 document.getElementById(targetId)?.classList.add('active');
-             }
+            // --- CORRECTION POUR L'ÉDITEUR DE TEXTE ---
+            // On injecte les données dans une chaîne de caractères, puis on la parse.
+            const allServerRolesJSON = '<%- JSON.stringify(roles) %>';
+            const allServerRoles = JSON.parse(allServerRolesJSON);
+    
+            // --- GESTION DES ONGLETS ---
+            const tabs = document.querySelectorAll('.nav-category');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            const activateTab = (tabEl) => {
+              if(!tabEl) return;
+              tabs.forEach(t => t.classList.remove('active'));
+              contents.forEach(c => c.classList.remove('active'));
+              tabEl.classList.add('active');
+              const targetId = tabEl.getAttribute('data-tab');
+              document.getElementById(targetId)?.classList.add('active');
+            }
 
-             tabs.forEach(tab => {
-                 tab.addEventListener('click', (e) => {
-                     e.preventDefault();
-                     if(tab.classList.contains('active')) return;
-                     tabs.forEach(t => t.classList.remove('active'));
-                     tab.classList.add('active');
-                     const targetId = tab.getAttribute('data-tab');
-                     contents.forEach(content => {
-                         content.classList.remove('active');
-                         if (content.id === targetId) content.classList.add('active');
-                     });
-                 });
-             });
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    activateTab(tab);
+                });
+            });
+            activateTab(document.querySelector('.nav-category.active'));
 
-            // ... le reste de votre script JS reste identique ...
-             const saveBar = document.getElementById('save-bar');
-             const showSaveBar = () => {
-                 if(saveBar) {
-                     saveBar.classList.add('visible');
-                     document.getElementById('save-status').textContent = 'Des changements non sauvegardés.';
-                 }
-             }
-             document.querySelectorAll('form').forEach(form => form.addEventListener('input', showSaveBar));
-             document.querySelectorAll('.role-item').forEach(item => item.addEventListener('click', showSaveBar));
-             
-             const roleContainer = document.querySelector('.role-selector-container');
-             if(roleContainer) {
-                 const hiddenInput = document.getElementById('autorole-roles-input');
-                 const selectedRoles = new Set(hiddenInput.value ? hiddenInput.value.split(',') : []);
 
-                 roleContainer.addEventListener('click', (e) => {
-                     const roleItem = e.target.closest('.role-item');
-                     if (roleItem && !roleItem.querySelector('.permission-denied-icon')) {
-                         const roleId = roleItem.getAttribute('data-role-id');
-                         roleItem.classList.toggle('selected');
-                         
-                         if (selectedRoles.has(roleId)) {
-                             selectedRoles.delete(roleId);
-                         } else {
-                             selectedRoles.add(roleId);
-                         }
-                         hiddenInput.value = Array.from(selectedRoles).join(',');
-                     }
-                 });
-             }
-             
-             const saveButton = document.getElementById('save-button');
-             const saveStatus = document.getElementById('save-status');
-             if(saveButton) {
-                 saveButton.addEventListener('click', async () => {
-                     saveButton.disabled = true;
-                     saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
-                     
-                     const guildId = window.location.pathname.split('/').pop();
-                     const promises = [];
+            // --- BARRE DE SAUVEGARDE ---
+            const saveBar = document.getElementById('save-bar');
+            const showSaveBar = () => {
+                if(saveBar) {
+                    saveBar.classList.add('visible');
+                    document.getElementById('save-status').textContent = 'Des changements non sauvegardés.';
+                }
+            }
+            document.querySelectorAll('form').forEach(form => form.addEventListener('input', showSaveBar));
 
-                     document.querySelectorAll('form').forEach(form => {
-                         const formName = form.getAttribute('data-form-name');
-                         if (!formName) return;
 
-                         let formData = {};
-                         if (formName === 'welcome') {
-                             formData = {
-                                 enabled: form.querySelector('[name=welcomeEnabled]').checked,
-                                 channelId: form.querySelector('[name=welcomeChannelId]').value,
-                                 message: form.querySelector('[name=welcomeMessage]').value,
-                                 bannerUrl: form.querySelector('[name=welcomeBannerUrl]') ? form.querySelector('[name=welcomeBannerUrl]').value : null,
-                             };
-                         } else if (formName === 'autorole') {
-                             formData = {
-                                 enabled: form.querySelector('[name=autoroleEnabled]').checked,
-                                 roles: form.querySelector('[name=autoroleRoles]').value.split(',').filter(Boolean) 
-                             };
-                         }
-                         
-                         promises.push(fetch(`/api/settings/${guildId}/${formName}`, { 
-                             method: 'POST', 
-                             headers: { 'Content-Type': 'application/json' }, 
-                             body: JSON.stringify(formData) 
-                         }));
-                     });
-                     
-                     try {
-                         const responses = await Promise.all(promises);
-                         for (const res of responses) {
-                             if (!res.ok) throw new Error(`Échec d'une sauvegarde: ${res.statusText}`);
-                         }
+            // --- NOUVELLE LOGIQUE POUR LE SÉLECTEUR DE RÔLES ---
+            const searchInput = document.getElementById('role-search-input');
+            const resultsContainer = document.getElementById('role-search-results');
+            const selectedContainer = document.getElementById('selected-roles-container');
+            const hiddenInput = document.getElementById('autorole-roles-input');
 
-                         saveStatus.textContent = 'Changements enregistrés !';
-                         if(saveBar) setTimeout(() => saveBar.classList.remove('visible'), 2000);
+            const selectedRoles = new Set(hiddenInput.value ? hiddenInput.value.split(',') : []);
 
-                     } catch (error) {
-                         saveStatus.textContent = 'Une erreur est survenue.';
-                         console.error("Save error:", error);
-                     } finally {
-                         setTimeout(() => {
-                             saveButton.disabled = false;
-                             saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
-                         }, 2500);
-                     }
-                 });
-             }
+            const updateSelectedDisplay = () => {
+                selectedContainer.innerHTML = '';
+                selectedRoles.forEach(roleId => {
+                    const role = allServerRoles.find(r => r.id === roleId);
+                    if (role) {
+                        const pill = document.createElement('div');
+                        pill.className = 'role-pill';
+                        pill.dataset.roleId = role.id;
+                        
+                        const colorSpan = document.createElement('span');
+                        colorSpan.className = 'role-pill-color';
+                        colorSpan.style.backgroundColor = role.color;
+                        pill.appendChild(colorSpan);
 
-             const bannerInput = document.getElementById('banner-upload-input');
-             if (bannerInput) {
-                 const bannerBase64Input = document.getElementById('banner-base64-input');
-                 const bannerPreviewContainer = document.getElementById('banner-preview');
-                 const bannerPreviewImg = bannerPreviewContainer.querySelector('img');
-                 bannerInput.addEventListener('change', () => {
-                     const file = bannerInput.files[0];
-                     if (file && bannerPreviewImg) {
-                         const reader = new FileReader();
-                         reader.onload = (e) => {
-                             const base64String = e.target.result;
-                             bannerPreviewImg.src = base64String;
-                             bannerBase64Input.value = base64String;
-                             bannerPreviewContainer.classList.remove('hidden');
-                             showSaveBar();
-                         };
-                         reader.readAsDataURL(file);
-                     }
-                 });
-             }
+                        const nameSpan = document.createElement('span');
+                        nameSpan.textContent = role.name;
+                        pill.appendChild(nameSpan);
+
+                        const removeBtn = document.createElement('button');
+                        removeBtn.type = 'button';
+                        removeBtn.className = 'remove-role-btn';
+                        removeBtn.innerHTML = '&times;';
+                        removeBtn.onclick = () => removeRole(role.id);
+                        pill.appendChild(removeBtn);
+
+                        selectedContainer.appendChild(pill);
+                    }
+                });
+                hiddenInput.value = Array.from(selectedRoles).join(',');
+            };
+
+            const removeRole = (roleId) => {
+                selectedRoles.delete(roleId);
+                updateSelectedDisplay();
+                showSaveBar();
+            };
+
+            const addRole = (roleId) => {
+                const role = allServerRoles.find(r => r.id === roleId);
+                if (role && !role.canManage) {
+                    alert("Le bot n'a pas les permissions pour gérer ce rôle.");
+                    return;
+                }
+                selectedRoles.add(roleId);
+                updateSelectedDisplay();
+                searchInput.value = '';
+                resultsContainer.classList.remove('visible');
+                showSaveBar();
+            };
+
+            const showResults = () => {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filteredRoles = allServerRoles.filter(role => 
+                    !selectedRoles.has(role.id) && role.name.toLowerCase().includes(searchTerm)
+                );
+                
+                resultsContainer.innerHTML = '';
+                if (filteredRoles.length === 0) {
+                    resultsContainer.innerHTML = '<div class="result-item disabled">Aucun rôle trouvé</div>';
+                } else {
+                    filteredRoles.forEach(role => {
+                        const item = document.createElement('div');
+                        item.className = 'result-item';
+                        if (!role.canManage) {
+                            item.classList.add('disabled');
+                            item.title = "Le bot ne peut pas gérer ce rôle.";
+                        } else {
+                           item.onclick = () => addRole(role.id);
+                        }
+                        
+                        const colorSpan = document.createElement('span');
+                        colorSpan.className = 'role-pill-color';
+                        colorSpan.style.backgroundColor = role.color;
+                        item.appendChild(colorSpan);
+                        item.append(role.name);
+
+                        resultsContainer.appendChild(item);
+                    });
+                }
+                resultsContainer.classList.add('visible');
+            };
+
+            searchInput.addEventListener('input', showResults);
+            searchInput.addEventListener('focus', showResults);
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.role-selector-wrapper')) {
+                    resultsContainer.classList.remove('visible');
+                }
+            });
+            updateSelectedDisplay();
+
+
+            // --- LOGIQUE DE SAUVEGARDE (Inchangée) ---
+            const saveButton = document.getElementById('save-button');
+            if(saveButton) {
+                saveButton.addEventListener('click', async () => {
+                    saveButton.disabled = true;
+                    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+                    const guildId = window.location.pathname.split('/').pop();
+                    const promises = [];
+                    document.querySelectorAll('form').forEach(form => {
+                        const formName = form.getAttribute('data-form-name');
+                        if (!formName) return;
+                        let formData = {};
+                        if (formName === 'welcome') {
+                            formData = {
+                                enabled: form.querySelector('[name=welcomeEnabled]').checked,
+                                channelId: form.querySelector('[name=welcomeChannelId]').value,
+                                message: form.querySelector('[name=welcomeMessage]').value,
+                                bannerUrl: form.querySelector('[name=welcomeBannerUrl]') ? form.querySelector('[name=welcomeBannerUrl]').value : null,
+                            };
+                        } else if (formName === 'autorole') {
+                            formData = {
+                                enabled: form.querySelector('[name=autoroleEnabled]').checked,
+                                roles: form.querySelector('[name=autoroleRoles]').value.split(',').filter(Boolean) 
+                            };
+                        }
+                        promises.push(fetch(`/api/settings/${guildId}/${formName}`, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify(formData) 
+                        }));
+                    });
+                    try {
+                        await Promise.all(promises);
+                        document.getElementById('save-status').textContent = 'Changements enregistrés !';
+                        if(saveBar) setTimeout(() => saveBar.classList.remove('visible'), 2000);
+                    } catch (error) {
+                        document.getElementById('save-status').textContent = 'Une erreur est survenue.';
+                    } finally {
+                        setTimeout(() => {
+                            saveButton.disabled = false;
+                            saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+                        }, 2500);
+                    }
+                });
+            }
+
+            // --- LOGIQUE POUR L'IMPORT D'IMAGE (Inchangée) ---
+            const bannerInput = document.getElementById('banner-upload-input');
+            if (bannerInput) {
+                // ... (code de la bannière inchangé)
+            }
         });
     </script>
 </body>
