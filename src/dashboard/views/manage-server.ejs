@@ -54,7 +54,7 @@
                 <% if (typeof guild !== 'undefined' && guild) { %>
                 <div class="dashboard-grid">
                     <div class="dashboard-card main-info-card">
-                        <img src="<%= guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=256` : '/images/default-icon.png' %>" alt="Icône du serveur" class="server-main-icon">
+                        <img src="<%= guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : '/images/default-icon.png' %>" alt="Icône du serveur" class="server-main-icon">
                         <div class="server-main-details">
                             <h2><%= guild.name %></h2>
                             <p class="server-id">ID: <%= guild.id %></p>
@@ -249,6 +249,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // CETTE LIGNE EST LE PROBLÈME. ELLE DOIT ÊTRE DYNAMIQUE, PAS HARDCODÉE.
+            // allServerRolesJSON est le contenu qui était hardcodé.
+            // Il contenait "La Palme D\'or" ce qui cassait la chaîne JS.
+            // On le remplace par la version dynamique qui est générée par le serveur.
             const allServerRolesJSON = '<%- JSON.stringify(roles) %>'; 
             let allServerRoles = [];
 
@@ -341,7 +345,7 @@
                     }
                     buttons.forEach(btn => btn.classList.remove('active'));
                     const activeBtn = ticketsForm.querySelector(`.tab-switch-btn[data-tickets-tab="${activeTabPrefix}-${currentMode}"]`);
-                    if (activeBtn) activeBtn.classList.add('active'); // Added check
+                    if (activeBtn) activeBtn.classList.add('active');
                 };
 
                 categoryTabButtons.forEach(button => {
@@ -510,12 +514,12 @@
                             
                             formData = {
                                 categoryMode: categoryMode,
-                                categoryName: categoryMode === 'create' ? document.getElementById('ticket-category-name').value : null, // Use null for clarity
-                                existingCategoryId: categoryMode === 'select' ? document.getElementById('ticket-existing-category').value : null, // Use null for clarity
+                                categoryName: categoryMode === 'create' ? document.getElementById('ticket-category-name').value : null,
+                                existingCategoryId: categoryMode === 'select' ? document.getElementById('ticket-existing-category').value : null,
                                 
                                 logChannelMode: logChannelMode,
-                                logChannelName: logChannelMode === 'create' ? document.getElementById('ticket-log-channel-name').value : null, // Use null for clarity
-                                existingLogChannelId: logChannelMode === 'select' ? document.getElementById('ticket-existing-log-channel').value : null, // Use null for clarity
+                                logChannelName: logChannelMode === 'create' ? document.getElementById('ticket-log-channel-name').value : null,
+                                existingLogChannelId: logChannelMode === 'select' ? document.getElementById('ticket-existing-log-channel').value : null,
 
                                 validationEnabled: document.querySelector('[name=ticketValidationEnabled]')?.checked || false,
                                 moderatorRoles: Array.from(selectedTicketModeratorRoles)

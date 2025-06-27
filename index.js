@@ -230,15 +230,15 @@ app.get('/manage/:guildId', async (req, res) => {
             return role && role.position !== undefined && role.position > maxPos ? role.position : maxPos;
         }, 0) : 0;
         
-        // --- NOUVELLE LOGIQUE POUR GÉRER LES ÉMOJIS DANS LES NOMS DE RÔLES ---
         const roles = Array.isArray(rolesData) ? rolesData
             .filter(role => role.name !== '@everyone' && !role.managed)
             .map(role => {
                 let safeRoleName = role.name;
                 try {
                     // Stringify le nom du rôle pour échapper les caractères spéciaux et emojis
+                    // Puis supprimer les guillemets doubles ajoutés par JSON.stringify
+                    // Cela garantit que la chaîne est sûre pour être insérée dans du JS client
                     safeRoleName = JSON.stringify(role.name);
-                    // Supprimer les guillemets doubles ajoutés par JSON.stringify
                     safeRoleName = safeRoleName.substring(1, safeRoleName.length - 1);
                 } catch (e) {
                     console.error(`Erreur lors de la sécurisation du nom de rôle "${role.name}":`, e);
@@ -256,7 +256,6 @@ app.get('/manage/:guildId', async (req, res) => {
             })
             .sort((a, b) => b.position - a.position)
             : [];
-        // --- FIN DE LA NOUVELLE LOGIQUE ---
 
         const defaultTicketsSettings = {
             categoryMode: 'create',
