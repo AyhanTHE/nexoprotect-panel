@@ -161,7 +161,18 @@ app.get('/dashboard', async (req, res) => {
         const botGuildsCollection = db.collection('botGuilds');
         const botGuilds = await botGuildsCollection.find({}, { projection: { guildId: 1 } }).toArray();
         const botGuildIds = new Set(botGuilds.map(g => g.guildId));
-        const guilds = adminGuilds.map(guild => ({...guild, botOnServer: botGuildIds.has(guild.id)}));
+
+        // --- DÉBOGAGE POUR LE BOUTON "GÉRER" ---
+        console.log("IDs des serveurs où le bot est (depuis DB):", Array.from(botGuildIds));
+        // --- FIN DÉBOGAGE ---
+
+        const guilds = adminGuilds.map(guild => {
+            const botOnServer = botGuildIds.has(guild.id);
+            // --- DÉBOGAGE POUR LE BOUTON "GÉRER" ---
+            console.log(`Serveur ${guild.name} (ID: ${guild.id}) - Bot présent: ${botOnServer}`);
+            // --- FIN DÉBOGAGE ---
+            return { ...guild, botOnServer };
+        });
 
         res.render('dashboard', { user, guilds });
 
@@ -211,7 +222,6 @@ app.get('/manage/:guildId', async (req, res) => {
         const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
         const user = { ...req.session.user, grade };
 
-        // Filtrage des salons de texte et de catégories
         const textChannels = Array.isArray(channelsData) ? channelsData.filter(c => c.type === 0 || c.type === 5) : []; // 0: text, 5: announcement
         const categories = Array.isArray(channelsData) ? channelsData.filter(c => c.type === 4) : []; // 4: category
         
@@ -232,7 +242,6 @@ app.get('/manage/:guildId', async (req, res) => {
             .sort((a, b) => b.position - a.position)
             : [];
 
-        // Initialisation des paramètres par défaut avec Nullish Coalescing Operator (??) pour plus de robustesse
         const defaultTicketsSettings = {
             categoryMode: 'create',
             categoryName: 'Tickets',
@@ -407,7 +416,6 @@ app.post('/api/settings/:guildId/tickets', async (req, res) => {
             validationEnabled, moderatorRoles
         } = req.body;
 
-        // Validation simple des données
         if (!['create', 'select'].includes(categoryMode) || !['create', 'select'].includes(logChannelMode)) {
             return res.status(400).json({ success: false, message: 'Mode de catégorie ou de salon de logs invalide.' });
         }
@@ -458,15 +466,24 @@ app.post('/api/claim-trial-vip', async (req, res) => {
     try {
         const premiumCollection = db.collection('premiumsubscriptions');
         const userDb = await premiumCollection.findOne({ userId: req.session.user.id });
-        if ((userDb && userDb.vipExpires && new Date(userDb.vipExpires) > new Date()) || (userDb && userDb.usedTrial)) {
+        
+        // --- CORRECTION : Assurer que usedTrial est bien vérifié et défini ---
+        if ((userDb && userDb.vipExpires && new Date(userDb.vipExpires) > new Date()) || (userDb && userDb.usedTrial === true)) { // Explicitly check for true
+            console.log(`Tentative de réclamer VIP essai par ${req.session.user.id}: Déjà VIP ou essai utilisé.`);
             return res.status(403).json({ success: false, message: 'Déjà VIP ou essai utilisé.' });
         }
+
         const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await premiumCollection.updateOne(
             { userId: req.session.user.id },
             { 
-                $set: { vipExpires: expiryDate, usedTrial: true },
-                $setOnInsert: { userId: req.session.user.id }
+                $set: { 
+                    vipExpires: expiryDate, 
+                    usedTrial: true // Toujours définir à true lors de la réclamation
+                },
+                $setOnInsert: { // S'applique uniquement si le document est NOUVEAU
+                    userId: req.session.user.id 
+                }
             },
             { upsert: true }
         );
@@ -486,7 +503,7 @@ async function startServer() {
         const mongoClient = new MongoClient(process.env.DATABASE_URL);
         await mongoClient.connect();
         console.log('✅ Panel web connecté à la base de données MongoDB !');
-        db = mongoClient.db('nexoproteect_db'); // Assurez-vous que le nom de la DB est correct
+        db = mongoClient.db('nexoprotect_db'); // Assurez-vous que le nom de la DB est correct
         
         app.listen(PORT, () => {
             console.log(`✅ Serveur web du panel démarré et à l'écoute sur le port ${PORT}`);
