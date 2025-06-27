@@ -230,17 +230,33 @@ app.get('/manage/:guildId', async (req, res) => {
             return role && role.position !== undefined && role.position > maxPos ? role.position : maxPos;
         }, 0) : 0;
         
+        // --- NOUVELLE LOGIQUE POUR GÉRER LES ÉMOJIS DANS LES NOMS DE RÔLES ---
         const roles = Array.isArray(rolesData) ? rolesData
             .filter(role => role.name !== '@everyone' && !role.managed)
-            .map(role => ({ 
-                id: role.id, 
-                name: role.name, 
-                color: `#${(role.color || 0).toString(16).padStart(6, '0')}`,
-                position: role.position,
-                canManage: role.position !== undefined && role.position < botHighestRolePosition 
-            }))
+            .map(role => {
+                let safeRoleName = role.name;
+                try {
+                    // Stringify le nom du rôle pour échapper les caractères spéciaux et emojis
+                    safeRoleName = JSON.stringify(role.name);
+                    // Supprimer les guillemets doubles ajoutés par JSON.stringify
+                    safeRoleName = safeRoleName.substring(1, safeRoleName.length - 1);
+                } catch (e) {
+                    console.error(`Erreur lors de la sécurisation du nom de rôle "${role.name}":`, e);
+                    // Fallback si JSON.stringify échoue, en échappant au moins les apostrophes
+                    safeRoleName = role.name.replace(/'/g, "\\'"); 
+                }
+
+                return { 
+                    id: role.id, 
+                    name: safeRoleName, // Utilisez le nom de rôle sécurisé
+                    color: `#${(role.color || 0).toString(16).padStart(6, '0')}`,
+                    position: role.position,
+                    canManage: role.position !== undefined && role.position < botHighestRolePosition 
+                };
+            })
             .sort((a, b) => b.position - a.position)
             : [];
+        // --- FIN DE LA NOUVELLE LOGIQUE ---
 
         const defaultTicketsSettings = {
             categoryMode: 'create',
@@ -467,8 +483,7 @@ app.post('/api/claim-trial-vip', async (req, res) => {
         const premiumCollection = db.collection('premiumsubscriptions');
         const userDb = await premiumCollection.findOne({ userId: req.session.user.id });
         
-        // --- CORRECTION : Assurer que usedTrial est bien vérifié et défini ---
-        if ((userDb && userDb.vipExpires && new Date(userDb.vipExpires) > new Date()) || (userDb && userDb.usedTrial === true)) { // Explicitly check for true
+        if ((userDb && userDb.vipExpires && new Date(userDb.vipExpires) > new Date()) || (userDb && userDb.usedTrial === true)) {
             console.log(`Tentative de réclamer VIP essai par ${req.session.user.id}: Déjà VIP ou essai utilisé.`);
             return res.status(403).json({ success: false, message: 'Déjà VIP ou essai utilisé.' });
         }
@@ -479,9 +494,9 @@ app.post('/api/claim-trial-vip', async (req, res) => {
             { 
                 $set: { 
                     vipExpires: expiryDate, 
-                    usedTrial: true // Toujours définir à true lors de la réclamation
+                    usedTrial: true
                 },
-                $setOnInsert: { // S'applique uniquement si le document est NOUVEAU
+                $setOnInsert: { 
                     userId: req.session.user.id 
                 }
             },
@@ -503,7 +518,7 @@ async function startServer() {
         const mongoClient = new MongoClient(process.env.DATABASE_URL);
         await mongoClient.connect();
         console.log('✅ Panel web connecté à la base de données MongoDB !');
-        db = mongoClient.db('nexoprotect_db'); // Assurez-vous que le nom de la DB est correct
+        db = mongoClient.db('nexoprotect_db');
         
         app.listen(PORT, () => {
             console.log(`✅ Serveur web du panel démarré et à l'écoute sur le port ${PORT}`);
