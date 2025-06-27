@@ -232,49 +232,48 @@ app.get('/manage/:guildId', async (req, res) => {
             .sort((a, b) => b.position - a.position)
             : [];
 
-        // Initialisation des paramètres par défaut, incluant les tickets
-        const settings = guildSettings || {
-            welcome: { enabled: false, channelId: '', message: '', bannerUrl: '' },
-            tickets: { // Nouvelle structure pour les tickets
-                categoryMode: 'create', // 'create' ou 'select'
-                categoryName: 'Tickets',
-                existingCategoryId: '',
-                logChannelMode: 'create', // 'create' ou 'select'
-                logChannelName: 'demandes-de-tickets',
-                existingLogChannelId: '',
-                validationEnabled: false,
-                moderatorRoles: []
-            }
+        // Initialisation des paramètres par défaut avec Nullish Coalescing Operator (??) pour plus de robustesse
+        const defaultTicketsSettings = {
+            categoryMode: 'create',
+            categoryName: 'Tickets',
+            existingCategoryId: null,
+            logChannelMode: 'create',
+            logChannelName: 'demandes-de-tickets',
+            existingLogChannelId: null,
+            validationEnabled: false,
+            moderatorRoles: []
         };
 
-        // Assurez-vous que settings.welcome est un objet même si vide ou null de la DB
-        if (!settings.welcome || typeof settings.welcome !== 'object') {
-            settings.welcome = { enabled: false, channelId: '', message: '', bannerUrl: '' };
-        }
-        // Assurez-vous que settings.tickets et ses sous-propriétés existent
-        if (!settings.tickets || typeof settings.tickets !== 'object') {
-            settings.tickets = { 
-                categoryMode: 'create', categoryName: 'Tickets', existingCategoryId: '',
-                logChannelMode: 'create', logChannelName: 'demandes-de-tickets', existingLogChannelId: '',
-                validationEnabled: false, moderatorRoles: [] 
-            };
-        }
-        if (!Array.isArray(settings.tickets.moderatorRoles)) {
-            settings.tickets.moderatorRoles = [];
-        }
-
+        const settings = {
+            welcome: {
+                enabled: guildSettings?.welcome?.enabled ?? false,
+                channelId: guildSettings?.welcome?.channelId ?? '',
+                message: guildSettings?.welcome?.message ?? '',
+                bannerUrl: guildSettings?.welcome?.bannerUrl ?? null
+            },
+            tickets: {
+                categoryMode: guildSettings?.tickets?.categoryMode ?? defaultTicketsSettings.categoryMode,
+                categoryName: guildSettings?.tickets?.categoryName ?? defaultTicketsSettings.categoryName,
+                existingCategoryId: guildSettings?.tickets?.existingCategoryId ?? defaultTicketsSettings.existingCategoryId,
+                logChannelMode: guildSettings?.tickets?.logChannelMode ?? defaultTicketsSettings.logChannelMode,
+                logChannelName: guildSettings?.tickets?.logChannelName ?? defaultTicketsSettings.logChannelName,
+                existingLogChannelId: guildSettings?.tickets?.existingLogChannelId ?? defaultTicketsSettings.existingLogChannelId,
+                validationEnabled: guildSettings?.tickets?.validationEnabled ?? defaultTicketsSettings.validationEnabled,
+                moderatorRoles: Array.isArray(guildSettings?.tickets?.moderatorRoles) ? guildSettings.tickets.moderatorRoles : defaultTicketsSettings.moderatorRoles
+            }
+        };
 
         console.log("--- Données envoyées à manage-server.ejs (Avec Tickets) ---");
         console.log("User:", { id: user.id, username: user.username, grade: user.grade });
         console.log("Guild:", { id: guildData.id, name: guildData.name });
         console.log("Channels Count (Text/Announce):", textChannels.length);
-        console.log("Categories Count:", categories.length); // Ajoutez ce log
+        console.log("Categories Count:", categories.length);
         console.log("Roles Count:", roles.length);
         console.log("Settings:", JSON.stringify(settings, null, 2));
         console.log("--------------------------------------------------");
 
 
-        res.render('manage-server', { user, guild: guildData, channels: textChannels, roles, settings, categories }); // Passez 'categories'
+        res.render('manage-server', { user, guild: guildData, channels: textChannels, roles, settings, categories });
 
     } catch (error) {
         console.error("Erreur de chargement de la page de gestion:", error);
@@ -395,7 +394,6 @@ app.post('/api/settings/:guildId/welcome', async (req, res) => {
     }
 });
 
-// NOUVELLE ROUTE API POUR LES PARAMÈTRES DE TICKETS
 app.post('/api/settings/:guildId/tickets', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Non authentifié' });
     if (!db) {
@@ -433,11 +431,11 @@ app.post('/api/settings/:guildId/tickets', async (req, res) => {
             { guildId: req.params.guildId },
             { $set: { 
                 'tickets.categoryMode': categoryMode,
-                'tickets.categoryName': categoryName || null, // null si mode 'select'
-                'tickets.existingCategoryId': existingCategoryId || null, // null si mode 'create'
+                'tickets.categoryName': categoryName,
+                'tickets.existingCategoryId': existingCategoryId,
                 'tickets.logChannelMode': logChannelMode,
-                'tickets.logChannelName': logChannelName || null, // null si mode 'select'
-                'tickets.existingLogChannelId': existingLogChannelId || null, // null si mode 'create'
+                'tickets.logChannelName': logChannelName,
+                'tickets.existingLogChannelId': existingLogChannelId,
                 'tickets.validationEnabled': validationEnabled,
                 'tickets.moderatorRoles': moderatorRoles
             }},
@@ -488,7 +486,7 @@ async function startServer() {
         const mongoClient = new MongoClient(process.env.DATABASE_URL);
         await mongoClient.connect();
         console.log('✅ Panel web connecté à la base de données MongoDB !');
-        db = mongoClient.db('nexoprotect_db');
+        db = mongoClient.db('nexoproteect_db'); // Assurez-vous que le nom de la DB est correct
         
         app.listen(PORT, () => {
             console.log(`✅ Serveur web du panel démarré et à l'écoute sur le port ${PORT}`);
