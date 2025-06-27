@@ -249,10 +249,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // CETTE LIGNE EST LE PROBLÈME. ELLE DOIT ÊTRE DYNAMIQUE, PAS HARDCODÉE.
-            // allServerRolesJSON est le contenu qui était hardcodé.
-            // Il contenait "La Palme D\'or" ce qui cassait la chaîne JS.
-            // On le remplace par la version dynamique qui est générée par le serveur.
+            // CETTE LIGNE EST LE POINT CRITIQUE. Elle DOIT utiliser JSON.stringify(roles) du serveur.
             const allServerRolesJSON = '<%- JSON.stringify(roles) %>'; 
             let allServerRoles = [];
 
