@@ -470,7 +470,7 @@ input:checked + .slider:before { transform: translateX(26px); }
 .slider.round { border-radius: 34px; }
 .slider.round:before { border-radius: 50%; }
 
-/* --- Styles pour l'AutoRôle --- */
+/* --- Styles pour le Sélecteur de Rôles (utilisé pour les modérateurs de tickets) --- */
 .role-selector-wrapper {
     position: relative;
     background-color: var(--bg-primary);
@@ -483,12 +483,12 @@ input:checked + .slider:before { transform: translateX(26px); }
     align-items: center;
     cursor: text;
     transition: all 0.2s ease-in-out;
-    box-shadow: 0 0 15px rgba(106, 90, 249, 0.2);
+    /* Removed the box-shadow for a cleaner look unless specifically needed */
 }
 .role-selector-wrapper:hover,
 .role-selector-wrapper:focus-within {
     border-color: var(--primary-accent);
-    box-shadow: 0 0 20px var(--primary-glow);
+    /* box-shadow: 0 0 20px var(--primary-glow); */ /* Removed */
 }
 
 .selected-roles-container {
@@ -533,7 +533,8 @@ input:checked + .slider:before { transform: translateX(26px); }
     color: var(--error-color);
 }
 
-#role-search-input {
+/* Updated input ID for tickets roles search */
+#ticket-moderator-role-search-input { 
     background: none;
     border: none;
     outline: none;
@@ -545,7 +546,8 @@ input:checked + .slider:before { transform: translateX(26px); }
     caret-color: var(--primary-accent);
 }
 
-.role-search-results {
+/* Updated results container ID for tickets roles search */
+#ticket-moderator-role-search-results {
     display: none;
     position: absolute;
     top: calc(100% + 5px);
@@ -558,7 +560,7 @@ input:checked + .slider:before { transform: translateX(26px); }
     overflow-y: auto;
     z-index: 101;
 }
-.role-search-results.visible {
+#ticket-moderator-role-search-results.visible {
     display: block;
 }
 
@@ -580,4 +582,155 @@ input:checked + .slider:before { transform: translateX(26px); }
 }
 .result-item.disabled:hover {
     background-color: transparent;
+}
+
+/* ========================================= */
+/* --- Styles spécifiques au module Tickets (AJOUTS) --- */
+/* ========================================= */
+
+.tickets-tab-content {
+    display: none; /* Cache tous les contenus d'onglets par défaut */
+    padding-top: 15px; /* Ajoute un peu d'espace au-dessus du contenu */
+}
+
+.tickets-tab-content.active {
+    display: block; /* Affiche le contenu de l'onglet actif */
+}
+
+/* Styles pour les boutons de commutation d'onglets (Créer/Sélectionner) */
+.tab-switch-buttons {
+    display: flex;
+    margin-top: 15px; /* Espace au-dessus des boutons */
+    border-radius: 8px; /* Bords arrondis pour le conteneur */
+    overflow: hidden; /* Assure que les coins des boutons à l'intérieur sont coupés par le radius du conteneur */
+    background-color: var(--bg-primary); /* Utilisation de la variable CSS */
+    border: 1px solid var(--border-color); /* Utilisation de la variable CSS */
+    max-width: 300px; /* Limite la largeur du groupe de boutons */
+}
+
+.tab-switch-btn {
+    flex-grow: 1; /* Chaque bouton prendra autant d'espace que possible */
+    padding: 10px 15px;
+    border: none;
+    background-color: transparent; /* Fond transparent par défaut */
+    color: var(--text-primary); /* Utilisation de la variable CSS */
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-right: 1px solid var(--border-color); /* Séparateur entre les boutons */
+}
+
+.tab-switch-btn:last-child {
+    border-right: none; /* Pas de bordure sur le dernier bouton */
+}
+
+.tab-switch-btn:hover:not(.active) {
+    background-color: var(--bg-tertiary); /* Couleur de fond au survol */
+}
+
+.tab-switch-btn.active {
+    background-color: var(--primary-accent); /* Couleur de fond du bouton actif (bleu Discord) */
+    color: #ffffff; /* Texte blanc pour le bouton actif */
+    font-weight: 700;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2); /* Légère ombre interne pour le relief */
+}
+
+/* --- Styles pour les éléments de formulaire existants (répétés pour clarté ou si des overrides sont nécessaires) ---*/
+/* Input box */
+.input-box,
+.textarea-box,
+.select-box {
+    width: 100%;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-box:focus,
+.textarea-box:focus,
+.select-box:focus {
+    border-color: var(--primary-accent);
+    box-shadow: 0 0 0 2px var(--primary-glow);
+    outline: none;
+}
+
+/* Labels */
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Checkbox */
+.checkbox-container {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 16px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: var(--text-secondary);
+}
+
+.checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+}
+
+.checkbox-container:hover input ~ .checkmark {
+    background-color: var(--bg-tertiary);
+}
+
+.checkbox-container input:checked ~ .checkmark {
+    background-color: var(--primary-accent);
+    border-color: var(--primary-accent);
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.checkbox-container .checkmark:after {
+    left: 9px;
+    top: 5px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
 }

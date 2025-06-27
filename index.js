@@ -8,27 +8,22 @@
 // --- IMPORTS DES MODULES NÉCESSAIRES ---
 const express = require('express');
 const path = require('path');
-const fetch = require('node-fetch'); // Pour faire des requêtes aux API externes
-const { MongoClient } = require('mongodb'); // Pour interagir avec la base de données
-const session = require('express-session'); // Pour gérer les sessions utilisateur
-const paypalSDK = require('@paypal/checkout-server-sdk'); // Pour l'intégration PayPal
-require('dotenv').config(); // Pour charger les variables d'environnement depuis le fichier .env
+const fetch = require('node-fetch');
+const { MongoClient } = require('mongodb');
+const session = require('express-session');
+const paypalSDK = require('@paypal/checkout-server-sdk');
+require('dotenv').config();
 
 // --- INITIALISATION & CONFIGURATION D'EXPRESS ---
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// On indique à Express qu'on utilise EJS comme moteur de template
 app.set('view engine', 'ejs');
-// On spécifie le dossier où se trouvent nos vues (fichiers .ejs)
 app.set('views', path.join(__dirname, 'src', 'dashboard', 'views'));
-// On fait confiance au proxy de Render.com pour la sécurité des cookies
 app.set('trust proxy', 1);
 
 // --- MIDDLEWARES ---
-// On sert les fichiers statiques (CSS, images, JS côté client) depuis le dossier 'public'
 app.use(express.static(path.join(__dirname, 'src', 'dashboard', 'public')));
-// On active le parsing des requêtes JSON et URL-encoded pour gérer les formulaires et les API
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -38,9 +33,9 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: process.env.NODE_ENV === 'production', // Le cookie est sécurisé (HTTPS) uniquement en production
+        secure: process.env.NODE_ENV === 'production',
         httpOnly: true, 
-        maxAge: 1000 * 60 * 60 * 24 // Durée de vie du cookie : 1 jour
+        maxAge: 1000 * 60 * 60 * 24
     }
 }));
 
@@ -48,19 +43,14 @@ app.use(session({
 let db;
 
 // --- CONFIGURATION DU CLIENT PAYPAL ---
-// On choisit l'environnement PayPal (Sandbox pour les tests, Live pour la production)
 const Environment = process.env.NODE_ENV === 'production'
   ? paypalSDK.core.LiveEnvironment
   : paypalSDK.core.SandboxEnvironment;
-// On crée le client PayPal avec les identifiants de l'environnement
 const paypalClient = new paypalSDK.core.PayPalHttpClient(
     new Environment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
 );
 
-// --- Middleware pour passer l'URL de base pour les redirections PayPal ---
-// Cela rend votre application plus flexible pour les déploiements
 app.use((req, res, next) => {
-    // baseDomainUrl sera quelque chose comme 'https://votrebot.com' ou 'http://localhost:3000'
     req.baseDomainUrl = `${req.protocol}://${req.get('host')}`;
     next();
 });
@@ -69,20 +59,15 @@ app.use((req, res, next) => {
 // --- ROUTES DE L'APPLICATION ---
 // =================================================================
 
-// --- Route Principale (Page d'accueil) ---
-// Récupère les statistiques et affiche la page d'accueil.
 app.get('/', async (req, res) => {
-    // Si l'utilisateur est déjà connecté, on le redirige vers son tableau de bord
     if (req.session.user) return res.redirect('/dashboard');
 
     try {
-        // Sécurité : On s'assure que la connexion à la DB est bien établie
         if (!db) {
             console.error("ERREUR CRITIQUE: La connexion à la base de données n'est pas encore établie.");
             return res.status(500).send("Erreur interne du serveur: Base de données non connectée.");
         }
 
-        // On récupère les statistiques en parallèle pour plus d'efficacité
         const [vipCount, serverCount] = await Promise.all([
             db.collection('premiumsubscriptions').countDocuments({ vipExpires: { $gt: new Date() } }),
             db.collection('botGuilds').countDocuments()
@@ -90,23 +75,20 @@ app.get('/', async (req, res) => {
 
         const stats = {
             vipCount: vipCount,
-            bannedCount: 0, // Placeholder, à remplacer par votre propre logique
+            bannedCount: 0,
             serverCount: serverCount
         };
 
-        // On affiche la page 'index.ejs' en lui passant les statistiques
         res.render('index', { stats });
 
     } catch (error) {
         console.error("Erreur lors de la récupération des statistiques pour la page d'accueil:", error.message);
-        // En cas d'erreur, on affiche la page avec des stats par défaut pour éviter un crash
         res.render('index', {
             stats: { vipCount: 0, bannedCount: 0, serverCount: 0 }
         });
     }
 });
 
-// --- Routes d'Authentification ---
 app.get('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/'));
 });
@@ -115,7 +97,6 @@ app.get('/callback', async (req, res) => {
     const code = req.query.code;
     if (!code) return res.status(400).send('Erreur: "code" manquant.');
     try {
-        // On échange le code d'autorisation contre un token d'accès
         const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
             method: 'POST',
             body: new URLSearchParams({
@@ -133,7 +114,6 @@ app.get('/callback', async (req, res) => {
             throw new Error(tokenData.error_description || 'Échec de l\'échange de token Discord.');
         }
 
-        // On utilise le token pour récupérer les infos de l'utilisateur
         const userResponse = await fetch('https://discord.com/api/users/@me', { headers: { authorization: `Bearer ${tokenData.access_token}` } });
         const userData = await userResponse.json();
         if (!userResponse.ok) {
@@ -141,7 +121,6 @@ app.get('/callback', async (req, res) => {
             throw new Error('Échec de la récupération des informations utilisateur Discord.');
         }
 
-        // On sauvegarde les infos dans la session
         req.session.accessToken = tokenData.access_token;
         req.session.user = userData;
         req.session.save(err => {
@@ -158,7 +137,6 @@ app.get('/callback', async (req, res) => {
     }
 });
 
-// --- Routes du Panel de Contrôle ---
 app.get('/dashboard', async (req, res) => {
     if (!req.session.user) return res.redirect('/');
     if (!db) {
@@ -233,15 +211,15 @@ app.get('/manage/:guildId', async (req, res) => {
         const grade = (userDbInfo && userDbInfo.vipExpires && new Date(userDbInfo.vipExpires) > new Date()) ? "VIP" : "Utilisateur";
         const user = { ...req.session.user, grade };
 
-        const textChannels = Array.isArray(channelsData) ? channelsData.filter(c => c.type === 0 || c.type === 5) : [];
+        // Filtrage des salons de texte et de catégories
+        const textChannels = Array.isArray(channelsData) ? channelsData.filter(c => c.type === 0 || c.type === 5) : []; // 0: text, 5: announcement
+        const categories = Array.isArray(channelsData) ? channelsData.filter(c => c.type === 4) : []; // 4: category
         
         const botHighestRolePosition = (botMember && Array.isArray(botMember.roles) && Array.isArray(rolesData)) ? botMember.roles.reduce((maxPos, roleId) => {
             const role = rolesData.find(r => r.id === roleId);
             return role && role.position !== undefined && role.position > maxPos ? role.position : maxPos;
         }, 0) : 0;
         
-        // Les rôles sont toujours passés au template, même si autorole est désactivé,
-        // car ils peuvent être utilisés pour d'autres fonctionnalités (ex: modération future)
         const roles = Array.isArray(rolesData) ? rolesData
             .filter(role => role.name !== '@everyone' && !role.managed)
             .map(role => ({ 
@@ -254,28 +232,49 @@ app.get('/manage/:guildId', async (req, res) => {
             .sort((a, b) => b.position - a.position)
             : [];
 
-        // Initialisation des paramètres par défaut, SANS autorole.roles
+        // Initialisation des paramètres par défaut, incluant les tickets
         const settings = guildSettings || {
             welcome: { enabled: false, channelId: '', message: '', bannerUrl: '' },
-            // autorole: { enabled: false, roles: [] } // Supprimé
+            tickets: { // Nouvelle structure pour les tickets
+                categoryMode: 'create', // 'create' ou 'select'
+                categoryName: 'Tickets',
+                existingCategoryId: '',
+                logChannelMode: 'create', // 'create' ou 'select'
+                logChannelName: 'demandes-de-tickets',
+                existingLogChannelId: '',
+                validationEnabled: false,
+                moderatorRoles: []
+            }
         };
 
         // Assurez-vous que settings.welcome est un objet même si vide ou null de la DB
         if (!settings.welcome || typeof settings.welcome !== 'object') {
             settings.welcome = { enabled: false, channelId: '', message: '', bannerUrl: '' };
         }
-        // Il n'y a plus besoin de vérifier settings.autorole.roles ici.
+        // Assurez-vous que settings.tickets et ses sous-propriétés existent
+        if (!settings.tickets || typeof settings.tickets !== 'object') {
+            settings.tickets = { 
+                categoryMode: 'create', categoryName: 'Tickets', existingCategoryId: '',
+                logChannelMode: 'create', logChannelName: 'demandes-de-tickets', existingLogChannelId: '',
+                validationEnabled: false, moderatorRoles: [] 
+            };
+        }
+        if (!Array.isArray(settings.tickets.moderatorRoles)) {
+            settings.tickets.moderatorRoles = [];
+        }
 
-        console.log("--- Données envoyées à manage-server.ejs (Sans Autorole) ---");
+
+        console.log("--- Données envoyées à manage-server.ejs (Avec Tickets) ---");
         console.log("User:", { id: user.id, username: user.username, grade: user.grade });
         console.log("Guild:", { id: guildData.id, name: guildData.name });
-        console.log("Channels Count:", textChannels.length);
-        console.log("Roles Count:", roles.length); // Les rôles sont toujours passés
-        console.log("Settings (Welcome only):", JSON.stringify(settings, null, 2));
+        console.log("Channels Count (Text/Announce):", textChannels.length);
+        console.log("Categories Count:", categories.length); // Ajoutez ce log
+        console.log("Roles Count:", roles.length);
+        console.log("Settings:", JSON.stringify(settings, null, 2));
         console.log("--------------------------------------------------");
 
 
-        res.render('manage-server', { user, guild: guildData, channels: textChannels, roles, settings });
+        res.render('manage-server', { user, guild: guildData, channels: textChannels, roles, settings, categories }); // Passez 'categories'
 
     } catch (error) {
         console.error("Erreur de chargement de la page de gestion:", error);
@@ -396,8 +395,61 @@ app.post('/api/settings/:guildId/welcome', async (req, res) => {
     }
 });
 
-// La route POST pour /api/settings/:guildId/autorole est supprimée
-// app.post('/api/settings/:guildId/autorole', async (req, res) => { ... });
+// NOUVELLE ROUTE API POUR LES PARAMÈTRES DE TICKETS
+app.post('/api/settings/:guildId/tickets', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Non authentifié' });
+    if (!db) {
+        console.error("ERREUR: DB non connectée dans /api/settings/:guildId/tickets");
+        return res.status(500).json({ success: false, message: 'Erreur serveur: DB non connectée.' });
+    }
+    try {
+        const { 
+            categoryMode, categoryName, existingCategoryId,
+            logChannelMode, logChannelName, existingLogChannelId,
+            validationEnabled, moderatorRoles
+        } = req.body;
+
+        // Validation simple des données
+        if (!['create', 'select'].includes(categoryMode) || !['create', 'select'].includes(logChannelMode)) {
+            return res.status(400).json({ success: false, message: 'Mode de catégorie ou de salon de logs invalide.' });
+        }
+        if (categoryMode === 'create' && !categoryName) {
+            return res.status(400).json({ success: false, message: 'Le nom de la catégorie est requis en mode création.' });
+        }
+        if (categoryMode === 'select' && !existingCategoryId) {
+            return res.status(400).json({ success: false, message: 'La catégorie existante est requise en mode sélection.' });
+        }
+        if (logChannelMode === 'create' && !logChannelName) {
+            return res.status(400).json({ success: false, message: 'Le nom du salon de logs est requis en mode création.' });
+        }
+        if (logChannelMode === 'select' && !existingLogChannelId) {
+            return res.status(400).json({ success: false, message: 'Le salon de logs existant est requis en mode sélection.' });
+        }
+        if (!Array.isArray(moderatorRoles)) {
+            return res.status(400).json({ success: false, message: 'Les rôles modérateurs doivent être un tableau.' });
+        }
+
+        await db.collection('settings').updateOne(
+            { guildId: req.params.guildId },
+            { $set: { 
+                'tickets.categoryMode': categoryMode,
+                'tickets.categoryName': categoryName || null, // null si mode 'select'
+                'tickets.existingCategoryId': existingCategoryId || null, // null si mode 'create'
+                'tickets.logChannelMode': logChannelMode,
+                'tickets.logChannelName': logChannelName || null, // null si mode 'select'
+                'tickets.existingLogChannelId': existingLogChannelId || null, // null si mode 'create'
+                'tickets.validationEnabled': validationEnabled,
+                'tickets.moderatorRoles': moderatorRoles
+            }},
+            { upsert: true }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Erreur de sauvegarde des paramètres de tickets:", error);
+        res.status(500).json({ success: false, message: 'Erreur serveur' });
+    }
+});
+
 
 app.post('/api/claim-trial-vip', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ success: false, message: 'Non authentifié' });
@@ -431,8 +483,6 @@ app.post('/api/claim-trial-vip', async (req, res) => {
 // =================================================================
 // --- DÉMARRAGE DU SERVEUR ---
 // =================================================================
-// On utilise une fonction asynchrène pour s'assurer que la connexion à la DB
-// est terminée AVANT de démarrer le serveur web.
 async function startServer() {
     try {
         const mongoClient = new MongoClient(process.env.DATABASE_URL);

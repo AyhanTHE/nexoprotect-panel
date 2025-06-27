@@ -29,6 +29,7 @@
                 <div class="nav-divider"></div>
                 <h3 class="nav-title">Modules</h3>
                 <a href="#" class="nav-category" data-tab="tab-welcome"><i class="fas fa-users"></i><span>Arrivées & Départs</span></a>
+                <a href="#" class="nav-category" data-tab="tab-tickets"><i class="fas fa-ticket-alt"></i><span>Tickets</span></a>
                 <a href="#" class="nav-category" data-tab="tab-automod"><i class="fas fa-robot"></i><span>Auto-Modération</span></a>
                 <a href="#" class="nav-category" data-tab="tab-moderation"><i class="fas fa-shield-alt"></i><span>Modération</span></a>
             </nav>
@@ -154,6 +155,86 @@
                 </form>
             </div>
 
+            <div id="tab-tickets" class="tab-content">
+                <header class="manage-header">
+                    <h1>Système de Tickets</h1>
+                    <p>Configurez ici le système de tickets pour votre serveur.</p>
+                </header>
+                <form id="tickets-settings-form" data-form-name="tickets">
+                    <div class="settings-box is-enabled"> <div class="box-header">
+                            <h3>Catégorie des Tickets</h3>
+                            <div class="tab-switch-buttons">
+                                <button type="button" class="tab-switch-btn <%= (settings.tickets && settings.tickets.categoryMode === 'create') ? 'active' : '' %>" data-tickets-tab="create-category">Créer</button>
+                                <button type="button" class="tab-switch-btn <%= (settings.tickets && settings.tickets.categoryMode === 'select') ? 'active' : '' %>" data-tickets-tab="select-category">Sélectionner</button>
+                                <input type="hidden" name="ticketsCategoryMode" id="tickets-category-mode" value="<%= settings.tickets ? settings.tickets.categoryMode : 'create' %>">
+                            </div>
+                        </div>
+                        <div class="module-body">
+                            <div id="create-category" class="tickets-tab-content <%= (settings.tickets && settings.tickets.categoryMode === 'create') ? 'active' : '' %>">
+                                <label for="ticket-category-name">Nom de la Catégorie</label>
+                                <input type="text" id="ticket-category-name" name="ticketCategoryName" class="input-box" placeholder="Ex: Tickets" value="<%= settings.tickets ? settings.tickets.categoryName : 'Tickets' %>">
+                            </div>
+                            <div id="select-category" class="tickets-tab-content <%= (settings.tickets && settings.tickets.categoryMode === 'select') ? 'active' : '' %>">
+                                <label for="ticket-existing-category">Veuillez choisir une catégorie</label>
+                                <select id="ticket-existing-category" name="ticketExistingCategoryId" class="select-box">
+                                    <option value="">Désactivé</option>
+                                    <% categories.forEach(category => { %>
+                                        <option value="<%= category.id %>" <%= (settings.tickets && settings.tickets.existingCategoryId === category.id) ? 'selected' : '' %>>#<%= category.name %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="box-header">
+                            <h3>Salon de Validation de Tickets & Logs</h3>
+                            <div class="tab-switch-buttons">
+                                <button type="button" class="tab-switch-btn <%= (settings.tickets && settings.tickets.logChannelMode === 'create') ? 'active' : '' %>" data-tickets-tab="create-log-channel">Créer</button>
+                                <button type="button" class="tab-switch-btn <%= (settings.tickets && settings.tickets.logChannelMode === 'select') ? 'active' : '' %>" data-tickets-tab="select-log-channel">Sélectionner</button>
+                                <input type="hidden" name="ticketsLogChannelMode" id="tickets-log-channel-mode" value="<%= settings.tickets ? settings.tickets.logChannelMode : 'create' %>">
+                            </div>
+                        </div>
+                        <div class="module-body">
+                            <div id="create-log-channel" class="tickets-tab-content <%= (settings.tickets && settings.tickets.logChannelMode === 'create') ? 'active' : '' %>">
+                                <label for="ticket-log-channel-name">Nom du Salon de Logs</label>
+                                <input type="text" id="ticket-log-channel-name" name="ticketLogChannelName" class="input-box" placeholder="Ex: demandes-de-tickets" value="<%= settings.tickets ? settings.tickets.logChannelName : 'demandes-de-tickets' %>">
+                            </div>
+                            <div id="select-log-channel" class="tickets-tab-content <%= (settings.tickets && settings.tickets.logChannelMode === 'select') ? 'active' : '' %>">
+                                <label for="ticket-existing-log-channel">Veuillez choisir un salon de logs</label>
+                                <select id="ticket-existing-log-channel" name="ticketExistingLogChannelId" class="select-box">
+                                    <option value="">Désactivé</option>
+                                    <% textChannels.forEach(channel => { %> <option value="<%= channel.id %>" <%= (settings.tickets && settings.tickets.existingLogChannelId === channel.id) ? 'selected' : '' %>>#<%= channel.name %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="box-header">
+                            <h3>Validation des Tickets</h3>
+                        </div>
+                        <div class="module-body">
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="ticketValidationEnabled" <%= (settings.tickets && settings.tickets.validationEnabled) ? 'checked' : '' %>>
+                                <span class="checkmark"></span>
+                                Voulez-vous valider les raisons d'ouverture des tickets avant leur création ?
+                            </label>
+                        </div>
+
+                        <div class="box-header">
+                            <h3>Rôles Modérateurs de Tickets</h3>
+                        </div>
+                        <div class="module-body">
+                            <p class="box-description">Les membres ayant ces rôles pourront gérer les tickets (clôture, archivage, etc.).</p>
+                            <div class="role-selector-wrapper">
+                                <div class="selected-roles-container" id="ticket-moderator-roles-container"></div>
+                                <input type="text" id="ticket-moderator-role-search-input" placeholder="Chercher ou sélectionner un rôle...">
+                                <div class="role-search-results" id="ticket-moderator-role-search-results"></div>
+                            </div>
+                            <input type="hidden" name="ticketModeratorRoles" id="ticket-moderator-roles-input" value="<%= (settings.tickets && settings.tickets.moderatorRoles) ? settings.tickets.moderatorRoles.join(',') : '' %>">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <div id="tab-automod" class="tab-content"><header class="manage-header"><h1>Auto-Modération</h1><p>Ce module est en cours de développement.</p></header></div>
             <div id="tab-moderation" class="tab-content"><header class="manage-header"><h1>Modération</h1><p>Ce module est en cours de développement.</p></header></div>
         </main>
@@ -166,10 +247,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // allServerRoles n'est plus nécessaire car le module autorole est supprimé.
-            // On peut le garder vide ou le supprimer complètement si aucune autre partie ne l'utilise.
-            // Pour la sécurité, on le garde en tant que tableau vide.
-            const allServerRolesJSON = '<%- JSON.stringify([]) %>'; // Toujours un JSON valide d'un tableau vide
+            // allServerRoles est maintenant utilisé pour le sélecteur de rôles des modérateurs de tickets
+            const allServerRolesJSON = '<%- JSON.stringify(roles) %>'; 
             let allServerRoles = [];
             try {
                 allServerRoles = JSON.parse(allServerRolesJSON);
@@ -185,7 +264,7 @@
                 console.warn("allServerRoles n'est pas un tableau valide après parsing, initialisation à un tableau vide.");
             }
 
-            // --- GESTION DES ONGLETS ---
+            // --- GESTION DES ONGLETS DE LA BARRE LATÉRALE ---
             const tabs = document.querySelectorAll('.nav-category');
             const contents = document.querySelectorAll('.tab-content');
             const activateTab = (tabEl) => {
@@ -201,11 +280,11 @@
             }
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
-                    e.preventDefault(); // Empêche le comportement par défaut du lien (#)
+                    e.preventDefault(); 
                     activateTab(tab);
                 });
             });
-            activateTab(document.querySelector('.nav-category.active')); // Active l'onglet initial au chargement
+            activateTab(document.querySelector('.nav-category.active')); 
 
             // --- BARRE DE SAUVEGARDE ---
             const saveBar = document.getElementById('save-bar');
@@ -230,13 +309,172 @@
             };
             document.querySelectorAll('.module-toggle-switch').forEach(switchInput => {
                 switchInput.addEventListener('change', () => handleModuleToggle(switchInput));
-                // Initialiser l'état au chargement pour tous les interrupteurs
                 handleModuleToggle(switchInput); 
             });
 
-            // --- LOGIQUE SÉLECTEUR DE RÔLE (Toutes les fonctions liées sont supprimées) ---
-            // Supprimé : searchInput, resultsContainer, selectedContainer, hiddenInput, selectorWrapper
-            // Supprimé : updateSelectedDisplay, removeRole, addRole, showResults, et leurs eventListeners
+            // --- LOGIQUE SPÉCIFIQUE AU MODULE TICKETS ---
+            const ticketsForm = document.getElementById('tickets-settings-form');
+            if (ticketsForm) {
+                const categoryModeInput = document.getElementById('tickets-category-mode');
+                const logChannelModeInput = document.getElementById('tickets-log-channel-mode');
+
+                const createCategoryTab = document.getElementById('create-category');
+                const selectCategoryTab = document.getElementById('select-category');
+                const createLogChannelTab = document.getElementById('create-log-channel');
+                const selectLogChannelTab = document.getElementById('select-log-channel');
+
+                const categoryTabButtons = ticketsForm.querySelectorAll('.tab-switch-btn[data-tickets-tab$="-category"]');
+                const logChannelTabButtons = ticketsForm.querySelectorAll('.tab-switch-btn[data-tickets-tab$="-channel"]');
+
+                const updateTicketsTabDisplay = (modeInput, activeTabPrefix, createTabEl, selectTabEl, buttons) => {
+                    const currentMode = modeInput.value;
+                    createTabEl.classList.remove('active');
+                    selectTabEl.classList.remove('active');
+                    if (currentMode === 'create') {
+                        createTabEl.classList.add('active');
+                    } else {
+                        selectTabEl.classList.add('active');
+                    }
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    ticketsForm.querySelector(`.tab-switch-btn[data-tickets-tab="${activeTabPrefix}-${currentMode}"]`).classList.add('active');
+                };
+
+                categoryTabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const mode = button.getAttribute('data-tickets-tab').replace('create-category', 'create').replace('select-category', 'select');
+                        categoryModeInput.value = mode;
+                        updateTicketsTabDisplay(categoryModeInput, 'category', createCategoryTab, selectCategoryTab, categoryTabButtons);
+                        showSaveBar();
+                    });
+                });
+
+                logChannelTabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const mode = button.getAttribute('data-tickets-tab').replace('create-log-channel', 'create').replace('select-log-channel', 'select');
+                        logChannelModeInput.value = mode;
+                        updateTicketsTabDisplay(logChannelModeInput, 'log-channel', createLogChannelTab, selectLogChannelTab, logChannelTabButtons);
+                        showSaveBar();
+                    });
+                });
+
+                // Initialiser l'affichage des onglets de tickets au chargement
+                updateTicketsTabDisplay(categoryModeInput, 'category', createCategoryTab, selectCategoryTab, categoryTabButtons);
+                updateTicketsTabDisplay(logChannelModeInput, 'log-channel', createLogChannelTab, selectLogChannelTab, logChannelTabButtons);
+
+                // --- LOGIQUE SÉLECTEUR DE RÔLE POUR LES MODÉRATEURS DE TICKETS ---
+                const ticketModeratorSearchInput = document.getElementById('ticket-moderator-role-search-input');
+                const ticketModeratorResultsContainer = document.getElementById('ticket-moderator-role-search-results');
+                const ticketModeratorSelectedContainer = document.getElementById('ticket-moderator-roles-container');
+                const ticketModeratorHiddenInput = document.getElementById('ticket-moderator-roles-input');
+
+                const initialTicketModeratorRoles = ticketModeratorHiddenInput.value ? ticketModeratorHiddenInput.value.split(',').filter(Boolean) : [];
+                const selectedTicketModeratorRoles = new Set(initialTicketModeratorRoles);
+
+                const updateSelectedModeratorDisplay = () => {
+                    ticketModeratorSelectedContainer.innerHTML = '';
+                    selectedTicketModeratorRoles.forEach(roleId => {
+                        const role = allServerRoles.find(r => r.id === roleId);
+                        if (role) {
+                            const pill = document.createElement('div');
+                            pill.className = 'role-pill';
+                            pill.dataset.roleId = role.id;
+                            
+                            const colorSpan = document.createElement('span');
+                            colorSpan.className = 'role-pill-color';
+                            colorSpan.style.backgroundColor = role.color || '#99AAB5'; 
+                            pill.appendChild(colorSpan);
+
+                            const nameSpan = document.createElement('span');
+                            nameSpan.textContent = role.name;
+                            pill.appendChild(nameSpan);
+
+                            const removeBtn = document.createElement('button');
+                            removeBtn.type = 'button';
+                            removeBtn.className = 'remove-role-btn';
+                            removeBtn.innerHTML = '&times;';
+                            removeBtn.onclick = () => removeModeratorRole(role.id);
+                            pill.appendChild(removeBtn);
+
+                            ticketModeratorSelectedContainer.appendChild(pill);
+                        }
+                    });
+                    ticketModeratorHiddenInput.value = Array.from(selectedTicketModeratorRoles).join(',');
+                };
+
+                const removeModeratorRole = (roleId) => {
+                    selectedTicketModeratorRoles.delete(roleId);
+                    updateSelectedModeratorDisplay();
+                    showSaveBar();
+                };
+
+                const addModeratorRole = (roleId) => {
+                    const role = allServerRoles.find(r => r.id === roleId);
+                    if (!role || !role.canManage) { // Vérifiez aussi les permissions du bot si nécessaire
+                        alert("Le bot n'a pas les permissions pour gérer ce rôle ou le rôle n'existe pas.");
+                        return;
+                    }
+                    selectedTicketModeratorRoles.add(roleId);
+                    updateSelectedModeratorDisplay();
+                    ticketModeratorSearchInput.value = '';
+                    ticketModeratorResultsContainer.classList.remove('visible');
+                    showSaveBar();
+                };
+
+                const showModeratorResults = () => {
+                    const searchTerm = ticketModeratorSearchInput.value.toLowerCase();
+                    const filteredRoles = allServerRoles.filter(role => 
+                        !selectedTicketModeratorRoles.has(role.id) && role.name.toLowerCase().includes(searchTerm)
+                    );
+                    
+                    ticketModeratorResultsContainer.innerHTML = '';
+                    
+                    const rolesToShow = searchTerm ? filteredRoles : allServerRoles.filter(role => !selectedTicketModeratorRoles.has(role.id));
+
+                    if (rolesToShow.length === 0) {
+                        ticketModeratorResultsContainer.innerHTML = '<div class="result-item disabled">Aucun rôle trouvé</div>';
+                    } else {
+                        rolesToShow.forEach(role => {
+                            const item = document.createElement('div');
+                            item.className = 'result-item';
+                            if (!role.canManage) {
+                                item.classList.add('disabled');
+                                item.title = "Le bot ne peut pas gérer ce rôle.";
+                            } else {
+                               item.onclick = () => addModeratorRole(role.id);
+                            }
+                            
+                            const colorSpan = document.createElement('span');
+                            colorSpan.className = 'role-pill-color';
+                            colorSpan.style.backgroundColor = role.color || '#99AAB5';
+                            item.appendChild(colorSpan);
+                            item.append(role.name);
+                            ticketModeratorResultsContainer.appendChild(item);
+                        });
+                    }
+                    ticketModeratorResultsContainer.classList.add('visible');
+                };
+
+                ticketModeratorSearchInput.addEventListener('input', showModeratorResults);
+                ticketModeratorSearchInput.addEventListener('focus', showModeratorResults);
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.role-selector-wrapper')) {
+                        ticketModeratorResultsContainer.classList.remove('visible');
+                    }
+                });
+                updateSelectedModeratorDisplay(); // Appeler au chargement
+
+                // Initialiser le click sur le wrapper du sélecteur de rôle pour qu'il focus l'input
+                const ticketModeratorSelectorWrapper = document.querySelector('.role-selector-wrapper');
+                if (ticketModeratorSelectorWrapper) {
+                    ticketModeratorSelectorWrapper.addEventListener('click', (e) => {
+                        if (!e.target.closest('.remove-role-btn')) {
+                            ticketModeratorSearchInput.focus();
+                        }
+                    });
+                }
+            }
+            // --- FIN LOGIQUE SPÉCIFIQUE AU MODULE TICKETS ---
+
 
             // --- LOGIQUE DE SAUVEGARDE ---
             const saveButton = document.getElementById('save-button');
@@ -252,7 +490,6 @@
                         const formName = form.getAttribute('data-form-name');
                         if (!formName) return;
                         let formData = {};
-                        // Seul le formulaire 'welcome' est pertinent maintenant
                         if (formName === 'welcome') {
                             formData = {
                                 enabled: form.querySelector('[name=welcomeEnabled]')?.checked || false,
@@ -265,8 +502,28 @@
                                 headers: { 'Content-Type': 'application/json' }, 
                                 body: JSON.stringify(formData) 
                             }));
+                        } else if (formName === 'tickets') { // NOUVELLE LOGIQUE DE SAUVEGARDE POUR LES TICKETS
+                            const categoryMode = document.getElementById('tickets-category-mode').value;
+                            const logChannelMode = document.getElementById('tickets-log-channel-mode').value;
+                            
+                            formData = {
+                                categoryMode: categoryMode,
+                                categoryName: categoryMode === 'create' ? document.getElementById('ticket-category-name').value : undefined,
+                                existingCategoryId: categoryMode === 'select' ? document.getElementById('ticket-existing-category').value : undefined,
+                                
+                                logChannelMode: logChannelMode,
+                                logChannelName: logChannelMode === 'create' ? document.getElementById('ticket-log-channel-name').value : undefined,
+                                existingLogChannelId: logChannelMode === 'select' ? document.getElementById('ticket-existing-log-channel').value : undefined,
+
+                                validationEnabled: document.querySelector('[name=ticketValidationEnabled]')?.checked || false,
+                                moderatorRoles: Array.from(selectedTicketModeratorRoles)
+                            };
+                            promises.push(fetch(`/api/settings/${guildId}/${formName}`, { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify(formData) 
+                            }));
                         }
-                        // Le formulaire 'autorole' est ignoré
                     });
 
                     if (promises.length === 0) {
